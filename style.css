@@ -219,15 +219,45 @@ body {
     animation: pulse 3s infinite ease-in-out;
 }
 
+/* New container for relative positioning of orbit */
+#bigSebastianContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Orbiting Cursors */
+#cursor-orbit-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    animation: rotate 30s linear infinite;
+}
+
+.orbiting-cursor {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px; /* Size of the cursor image */
+    height: 40px;
+    background-image: url('cursor.webp');
+    background-size: contain;
+    transform-origin: center;
+    /* The magic: move it out from the center and then rotate it */
+    transform: translate(-50%, -50%) translateY(var(--orbit-radius)) rotate(var(--rotation));
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+
 @keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-        filter: drop-shadow(0 0 15px rgba(246, 200, 95, 0.2));
-    }
-    50% {
-        transform: scale(1.02);
-        filter: drop-shadow(0 0 25px rgba(246, 200, 95, 0.4));
-    }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }
 
 /* Right panel */
@@ -263,26 +293,6 @@ body {
     margin-bottom: 10px;
     font-size: 20px;
 }
-.prestige-badges {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-}
-.prestige-button {
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    background: linear-gradient(90deg, #5b2b2b, #7b3b3b);
-    color: #fff;
-    font-weight: 700;
-    box-shadow: 0 6px 18px rgba(11, 14, 18, 0.6);
-    transition: transform 120ms ease;
-}
-.prestige-button:hover {
-    transform: translateY(-3px);
-}
 
 /* Settings */
 .settings-button {
@@ -317,33 +327,6 @@ body {
     transform: translateY(-150px) scale(1.1) rotate(var(--random-rotation));
 }
 
-/* Golden Sebastian */
-.golden-sebastian {
-    position: absolute;
-    width: 80px;
-    height: 80px;
-    background-image: url('Sebastian.png');
-    background-size: contain;
-    z-index: calc(var(--z-floating) + 10);
-    cursor: pointer;
-    filter: drop-shadow(0 0 20px gold) brightness(1.5) saturate(2);
-    animation: golden-pulse 1s infinite, golden-move 10s linear infinite;
-    border-radius: 50%;
-}
-
-@keyframes golden-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-}
-
-@keyframes golden-move {
-    0% { transform: translate(0, 0); }
-    25% { transform: translate(20px, 20px); }
-    50% { transform: translate(0, -20px); }
-    75% { transform: translate(-20px, 20px); }
-    100% { transform: translate(0, 0); }
-}
-
 /* Active Effects */
 .effects-container {
     position: fixed;
@@ -364,43 +347,47 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-    #game {
-        grid-template-columns: 280px 1fr;
-        gap: 14px;
-    }
-    #rightPanel {
-        display: none;
-    }
+/* Golden Sebastian (now hidden in the rain) */
+.golden-sebastian {
+    /* Now it looks like a normal falling sebastian... */
+    position: absolute;
+    top: -50px;
+    background-image: url('Sebastian.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    animation: fall linear;
+    /* ...but with a subtle glow to be discoverable! */
+    filter: drop-shadow(0 0 15px gold) brightness(1.2);
+    opacity: 0.5; /* Slightly more opaque than normal rain */
+    z-index: 1; /* Above normal rain */
 }
 
-@media (max-width: 1000px) {
-    #game {
-        grid-template-columns: 1fr;
-        grid-auto-rows: min-content;
-        padding: 12px;
-        height: auto;
-        overflow-y: auto;
-    }
-    .panel {
-        height: auto;
-    }
-    .big-sebastian-button img {
-        width: 220px;
-        height: 220px;
-    }
+/* Sebastian Rain */
+#sebastian-rain-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1; /* Place it behind all other content */
+    overflow: hidden;
 }
 
-@media (max-width: 600px) {
-    .product {
-        grid-template-columns: 44px 1fr 70px;
-    }
-    .big-sebastian-button img {
-        width: 180px;
-        height: 180px;
-    }
-    .counter-number {
-        font-size: 34px;
+.raining-sebastian {
+    position: absolute;
+    top: -50px; /* Start above the screen */
+    background-image: url('Sebastian.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.15; /* Make them very subtle */
+    animation: fall linear;
+}
+
+@keyframes fall {
+    to {
+        transform: translateY(105vh);
+        opacity: 0;
     }
 }
