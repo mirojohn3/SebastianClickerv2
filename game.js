@@ -1,8 +1,8 @@
 // =================== Spielkonstanten ===================
-const RESET_COST = 400000000000;    // Kosten für einen Reset
-const PRICE_INCREASE = 0.15;        // Preiserhöhung um 15% (wie in Cookie Clicker)
-const GOLDEN_COOKIE_FREQ = 0.3;     // 30% Chance pro Minute für Golden Sebastian
-const GOLDEN_COOKIE_DURATION = 13;   // 13 Sekunden Dauer für Golden Sebastian
+const RESET_COST = 40000000;    // Kosten für einen Reset
+const PRICE_INCREASE = 0.05;        // Preiserhöhung um 15% (wie in Cookie Clicker)
+const GOLDEN_COOKIE_FREQ = 0.8;     // 30% Chance pro Minute für Golden Sebastian
+const GOLDEN_COOKIE_DURATION = 2;   // 13 Sekunden Dauer für Golden Sebastian
 
 // =================== Spielvariablen ===================
 let CookieCount = 0;                // Aktuelle Anzahl Sebastians
@@ -21,12 +21,12 @@ let Bank = 0;         // +1.500/s
 let Planet = 0;       // +10.000/s
 
 // Gebäude-Preise
-let preis_oma = 75;
-let preis_Farm = 500;
-let preis_Mine = 5000;
-let preis_Fabrik = 75000;
-let preis_Bank = 1000000;
-let preis_Planet = 1000000000;
+let preis_oma = 5;
+let preis_Farm = 50;
+let preis_Mine = 500;
+let preis_Fabrik = 5500;
+let preis_Bank = 100000;
+let preis_Planet = 1000000;
 
 // =================== Hilfsfunktionen ===================
 
@@ -338,4 +338,5 @@ window.addEventListener("DOMContentLoaded", () => {
     updateDisplay();
     // Start golden cookie spawning
     setInterval(spawnGoldenCookie, 60000);
+
 });
