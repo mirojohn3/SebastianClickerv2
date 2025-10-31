@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sebastian Clicker - Das Spiel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game">
+        
+        <!-- Left Section: Store -->
+        <div id="store">
+            <div id="storeTitle">Shop</div>
+            <div id="products">
+                <div class="product" onclick="OmaUpgrade()">
+                    <div class="icon">👵</div>
+                    <div class="content">
+                        <div class="title">Oma</div>
+                        <div class="description">Erzeugt +1 / Sek.</div>
+                    </div>
+                    <div class="meta">
+                            <div class="badge price" title="Preis"><span class="badge-icon">💰</span><span id="preis_oma_id">75</span></div>
+                            <div class="badge owned" title="Anzahl"><span class="badge-icon">🔢</span><span id="Omacounterid">0</span></div>
+                    </div>
+                </div>
+                <div class="product" onclick="FarmerUpgrade()">
+                    <div class="icon">👨‍🌾</div>
+                    <div class="content">
+                        <div class="title">Farmer</div>
+                        <div class="description">Erzeugt +5 / Sek.</div>
+                    </div>
+                    <div class="meta">
+                            <div class="badge price" title="Preis"><span class="badge-icon">💰</span><span id="preis_Farm_id">500</span></div>
+                            <div class="badge owned" title="Anzahl"><span class="badge-icon">🔢</span><span id="Farmercookiecounterid">0</span></div>
+                    </div>
+                </div>
+                <div class="product" onclick="MineUpgrade()">
+                    <div class="icon">⛏️</div>
+                    <div class="content">
+                        <div class="title">Mine</div>
+                        <div class="description">Erzeugt +25 / Sek.</div>
+                    </div>
+                    <div class="meta">
+                            <div class="badge price" title="Preis"><span class="badge-icon">💰</span><span id="preis_Mine_id">5000</span></div>
+                            <div class="badge owned" title="Anzahl"><span class="badge-icon">🔢</span><span id="Minecookiecounterid">0</span></div>
+                    </div>
+                </div>
+                <div class="product" onclick="FabrikUpgrade()">
+                    <div class="icon">🏭</div>
+                    <div class="content">
+                        <div class="title">Fabrik</div>
+                        <div class="description">Erzeugt +100 / Sek.</div>
+                    </div>
+                    <div class="meta">
+                            <div class="badge price" title="Preis"><span class="badge-icon">💰</span><span id="preis_Fabrik_id">75000</span></div>
+                            <div class="badge owned" title="Anzahl"><span class="badge-icon">🔢</span><span id="Fabrikcookiecounterid">0</span></div>
+                    </div>
+                </div>
+                <div class="product" onclick="BankUpgrade()">
+                    <div class="icon">🏦</div>
+                    <div class="content">
+                        <div class="title">Bank</div>
+                        <div class="description">Erzeugt +1.500 / Sek.</div>
+                    </div>
+                    <div class="meta">
+                            <div class="badge price" title="Preis"><span class="badge-icon">💰</span><span id="preis_Bank_id">1000000</span></div>
+                            <div class="badge owned" title="Anzahl"><span class="badge-icon">🔢</span><span id="bankcookiecounterid">0</span></div>
+                    </div>
+                </div>
+                <div class="product" onclick="PlanetUpgrade()">
+                    <div class="icon">🌍</div>
+                    <div class="content">
+                        <div class="title">Planet</div>
+                        <div class="description">Erzeugt +10.000 / Sek.</div>
+                    </div>
+                    <div class="meta">
+                            <div class="badge price" title="Preis"><span class="badge-icon">💰</span><span id="preis_Planet_id">1000000000</span></div>
+                            <div class="badge owned" title="Anzahl"><span class="badge-icon">🔢</span><span id="Planetcookiecounterid">0</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Section: Main Game -->
+        <div id="gameCenter">
+            <!-- Stats Bar -->
+            <div id="cookies">
+                <div id="cookieCounter" class="counter-wrap">
+                    <img src="Sebastian.png" class="counter-icon" alt="Sebastian" width="48" height="48" />
+                    <div class="counter-number"><span id="CookieCount">0</span></div>
+                </div>
+                <div id="cps">
+                    <div class="cps-badge" title="pro Sekunde">⚡ <span id="PerSecond">0</span>/s</div>
+                </div>
+            </div>
+
+            <!-- Main Clicker -->
+            <div id="bigCookie">
+                <img src="Sebastian.png" id="bigSebastian" onclick="CookieClick()" draggable="false" alt="Sebastian zum Klicken" width="256" height="256" />
+            </div>
+
+            <!-- Golden Sebastian Container -->
+            <div id="goldenCookieContainer"></div>
+        </div>
+
+        <!-- Right Section: Prestige only -->
+        <div id="rightPanel">
+            <!-- Prestige Section -->
+            <div id="prestige">
+                <div class="panelTitle">Prestige</div>
+                <div class="prestige-badges" style="display:flex;gap:8px;margin-bottom:10px">
+                    <div class="badge price" title="Nächster Bonus">+1 ⚡</div>
+                    <div class="badge owned" title="Benötigt">400B</div>
+                </div>
+                <button onclick="resetleck()" class="prestige-button">🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Button -->
+    <button onclick="deletestorage()" class="settings-button" title="Speicher löschen">
+        ⚙️
+    </button>
+
+    <!-- JavaScript einbinden -->
+    <script src="game.js"></script>
+</body>
+</html>
