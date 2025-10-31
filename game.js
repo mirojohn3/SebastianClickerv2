@@ -328,17 +328,18 @@ window.addEventListener("DOMContentLoaded", () => {
     Planet = parseInt(localStorage.getItem("Planetcookiecounter")) || Planet;
     
     // Load prices
-    preis_oma = 5;
-    preis_Farm = 50;
-    preis_Mine = 500;
-    preis_Fabrik = 5500;
-    preis_Bank = 100000;
-    preis_Planet = 1000000;
+    preis_oma = parseInt(localStorage.getItem("preis_oma")) || preis_oma;
+    preis_Farm = parseInt(localStorage.getItem("preis_Farm")) || preis_Farm;
+    preis_Mine = parseInt(localStorage.getItem("preis_Mine")) || preis_Mine;
+    preis_Fabrik = parseInt(localStorage.getItem("preis_Fabrik")) || preis_Fabrik;
+    preis_Bank = parseInt(localStorage.getItem("preis_Bank")) || preis_Bank;
+    preis_Planet = parseInt(localStorage.getItem("preis_Planet")) || preis_Planet;
     
     updateDisplay();
     // Start golden cookie spawning
     setInterval(spawnGoldenCookie, 60000);
 
 });
+
 
 
