@@ -1,6 +1,6 @@
 // =================== Spielkonstanten (versioniert) ===================
 // Wenn du Werte im Repo änderst (z.B. Preise), erhöhe GAME_VERSION.
-const GAME_VERSION = 5; // Erhöhe diesen Wert bei Änderungen an Defaults
+const GAME_VERSION = 4; // Erhöhe diesen Wert bei Änderungen an Defaults
 
 // Standardwerte (die du im Repo änderst). Bei Version-Änderung werden
 // die Preise aus diesen Basiswerten neu berechnet (unter Beibehalt der
@@ -19,9 +19,15 @@ const DEFAULTS = {
         preis_Mine: 500000,
         preis_Fabrik: 550000,
         preis_Bank: 100000000,
-        preis_Planet: 1000000000
+        preis_Planet: 1
     }
 };
+
+// Create a simple signature for basePrices to detect changes made in the
+// repository (so price changes in the code are applied on reload).
+function getBasePricesSignature() {
+    return JSON.stringify(DEFAULTS.basePrices);
+}
 
 // Konstanten initial aus DEFAULTS setzen (aktuelle Version der Client-Datei)
 const RESET_COST = DEFAULTS.RESET_COST;
@@ -67,20 +73,21 @@ function randInt(min, max) {
 
 // Aktualisiert alle Anzeigen
 function updateDisplay() {
-    document.getElementById("CookieCount").innerText = formatNumber(CookieCount);
-    document.getElementById("PerSecond").innerText = formatNumber(CookiesPerSecond);
-    document.getElementById("Omacounterid").innerText = formatNumber(Oma);
-    document.getElementById("Farmercookiecounterid").innerText = formatNumber(Farmer);
-    document.getElementById("Minecookiecounterid").innerText = formatNumber(Mine);
-    document.getElementById("Fabrikcookiecounterid").innerText = formatNumber(Fabrik);
-    document.getElementById("bankcookiecounterid").innerText = formatNumber(Bank);
-    document.getElementById("Planetcookiecounterid").innerText = formatNumber(Planet);
-    document.getElementById("preis_oma_id").innerText = formatNumber(preis_oma);
-    document.getElementById("preis_Farm_id").innerText = formatNumber(preis_Farm);
-    document.getElementById("preis_Mine_id").innerText = formatNumber(preis_Mine);
-    document.getElementById("preis_Fabrik_id").innerText = formatNumber(preis_Fabrik);
-    document.getElementById("preis_Bank_id").innerText = formatNumber(preis_Bank);
-    document.getElementById("preis_Planet_id").innerText = formatNumber(preis_Planet);
+    const el = id => document.getElementById(id);
+    if (el("CookieCount")) el("CookieCount").innerText = formatNumber(CookieCount);
+    if (el("PerSecond")) el("PerSecond").innerText = formatNumber(CookiesPerSecond);
+    if (el("Omacounterid")) el("Omacounterid").innerText = formatNumber(Oma);
+    if (el("Farmercookiecounterid")) el("Farmercookiecounterid").innerText = formatNumber(Farmer);
+    if (el("Minecookiecounterid")) el("Minecookiecounterid").innerText = formatNumber(Mine);
+    if (el("Fabrikcookiecounterid")) el("Fabrikcookiecounterid").innerText = formatNumber(Fabrik);
+    if (el("bankcookiecounterid")) el("bankcookiecounterid").innerText = formatNumber(Bank);
+    if (el("Planetcookiecounterid")) el("Planetcookiecounterid").innerText = formatNumber(Planet);
+    if (el("preis_oma_id")) el("preis_oma_id").innerText = formatNumber(preis_oma);
+    if (el("preis_Farm_id")) el("preis_Farm_id").innerText = formatNumber(preis_Farm);
+    if (el("preis_Mine_id")) el("preis_Mine_id").innerText = formatNumber(preis_Mine);
+    if (el("preis_Fabrik_id")) el("preis_Fabrik_id").innerText = formatNumber(preis_Fabrik);
+    if (el("preis_Bank_id")) el("preis_Bank_id").innerText = formatNumber(preis_Bank);
+    if (el("preis_Planet_id")) el("preis_Planet_id").innerText = formatNumber(preis_Planet);
 }
 
 // =================== Hauptspiel-Funktionen ===================
@@ -104,7 +111,8 @@ function createFloatingNumber(amount) {
     
     // Erstelle ein neues Bild-Element
     const img = document.createElement("img");
-    img.src = "seb2.png";
+    // Use the same Sebastian image used elsewhere; ensures file exists on most builds
+    img.src = "Sebastian.png";
     img.alt = "Mini Sebastian";
     newDiv.appendChild(img);
     
@@ -302,12 +310,12 @@ function resetleck() {
         preis_Planet = Math.ceil(DEFAULTS.basePrices.preis_Planet * Math.pow(1 + PRICE_INCREASE, Planet));
 
         // Alles speichern (inkl. version)
-        localStorage.setItem("mengecookiesproklick", mengecookiesproklick);
-        localStorage.setItem("resetcounter", resetCounter);
+    localStorage.setItem("mengecookiesproklick", mengecookiesproklick);
+    localStorage.setItem("resetCounter", resetCounter);
         saveAll();
         updateDisplay();
     } else {
-        alert("Du brauchst 400 Milliarden Sebastians für einen Reset!");
+        alert("Du brauchst " + formatNumber(RESET_COST) + " Sebastians für einen Reset!");
     }
 }
 
@@ -322,19 +330,40 @@ function deletestorage() {
 // Spielstand speichern
 function saveGameState() {
     const variables = {
-        CookieCount, CookiesPerSecond, mengecookiesproklick, resetCounter,
-        Oma, Farmer, Mine, Fabrik, Bank, Planet,
-        preis_oma, preis_Farm, preis_Mine, preis_Fabrik, preis_Bank, preis_Planet
+        // Save using consistent key names so load/restore works reliably
+        CookieCount: CookieCount,
+        CookiesPerSecond: CookiesPerSecond,
+        mengecookiesproklick: mengecookiesproklick,
+        resetCounter: resetCounter,
+        totalCookies: totalCookies,
+
+        Oma: Oma,
+        Farmer: Farmer,
+        Mine: Mine,
+        Fabrik: Fabrik,
+        Bank: Bank,
+        Planet: Planet,
+
+        preis_oma: preis_oma,
+        preis_Farm: preis_Farm,
+        preis_Mine: preis_Mine,
+        preis_Fabrik: preis_Fabrik,
+        preis_Bank: preis_Bank,
+        preis_Planet: preis_Planet
     };
-    
+
     for (const [key, value] of Object.entries(variables)) {
-        localStorage.setItem(key, value);
+        // store as string (LocalStorage only stores strings)
+        localStorage.setItem(key, String(value));
     }
 }
 
 // Speichere auch die aktuell verwendete DEFAULTS-Version
 function saveGameVersion() {
     localStorage.setItem('gameVersion', GAME_VERSION);
+    // Also persist the current basePrices signature so we can detect
+    // code-side price changes without relying solely on GAME_VERSION.
+    localStorage.setItem('basePricesSignature', getBasePricesSignature());
 }
 
 // Kombiniere saveGameState und gameVersion
@@ -352,20 +381,24 @@ window.addEventListener("DOMContentLoaded", () => {
     CookieCount = parseFloat(localStorage.getItem("CookieCount")) || CookieCount;
     CookiesPerSecond = parseFloat(localStorage.getItem("CookiesPerSecond")) || CookiesPerSecond;
     mengecookiesproklick = parseFloat(localStorage.getItem("mengecookiesproklick")) || mengecookiesproklick;
-    resetCounter = parseInt(localStorage.getItem("resetcounter")) || resetCounter;
+    resetCounter = parseInt(localStorage.getItem("resetCounter")) || resetCounter;
     totalCookies = parseFloat(localStorage.getItem("totalCookies")) || totalCookies;
 
-    // Load building counts
-    Oma = parseInt(localStorage.getItem("Omacookiecounter")) || Oma;
-    Farmer = parseInt(localStorage.getItem("Farmercookiecounter")) || Farmer;
-    Mine = parseInt(localStorage.getItem("Minecookiecounter")) || Mine;
-    Fabrik = parseInt(localStorage.getItem("Fabrikcookiecounter")) || Fabrik;
-    Bank = parseInt(localStorage.getItem("bankcookiecounter")) || Bank;
-    Planet = parseInt(localStorage.getItem("Planetcookiecounter")) || Planet;
+    // Load building counts (keys saved as 'Oma', 'Farmer', ...)
+    Oma = parseInt(localStorage.getItem("Oma")) || Oma;
+    Farmer = parseInt(localStorage.getItem("Farmer")) || Farmer;
+    Mine = parseInt(localStorage.getItem("Mine")) || Mine;
+    Fabrik = parseInt(localStorage.getItem("Fabrik")) || Fabrik;
+    Bank = parseInt(localStorage.getItem("Bank")) || Bank;
+    Planet = parseInt(localStorage.getItem("Planet")) || Planet;
 
     // If the stored gameVersion differs from the current GAME_VERSION,
+    // or the basePrices in the code were changed (signature mismatch),
     // migrate price/defaults while preserving progress.
-    if (savedVersion !== GAME_VERSION) {
+    const savedBaseSig = localStorage.getItem('basePricesSignature') || null;
+    const currentBaseSig = getBasePricesSignature();
+
+    if (savedVersion !== GAME_VERSION || savedBaseSig !== currentBaseSig) {
         // Recompute prices from fresh base prices and owned counts
         preis_oma = Math.ceil(DEFAULTS.basePrices.preis_oma * Math.pow(1 + PRICE_INCREASE, Oma));
         preis_Farm = Math.ceil(DEFAULTS.basePrices.preis_Farm * Math.pow(1 + PRICE_INCREASE, Farmer));
@@ -373,7 +406,6 @@ window.addEventListener("DOMContentLoaded", () => {
         preis_Fabrik = Math.ceil(DEFAULTS.basePrices.preis_Fabrik * Math.pow(1 + PRICE_INCREASE, Fabrik));
         preis_Bank = Math.ceil(DEFAULTS.basePrices.preis_Bank * Math.pow(1 + PRICE_INCREASE, Bank));
         preis_Planet = Math.ceil(DEFAULTS.basePrices.preis_Planet * Math.pow(1 + PRICE_INCREASE, Planet));
-
         // Apply any new constants from DEFAULTS (so changes to RESET_COST, frequencies, etc. take effect)
         // (we keep player-specific values such as mengecookiesproklick and resetCounter)
         // Save migrated state back to localStorage so future loads are consistent
@@ -388,13 +420,15 @@ window.addEventListener("DOMContentLoaded", () => {
         preis_Planet = parseInt(localStorage.getItem("preis_Planet")) || preis_Planet;
     }
 
+    // Recompute CookiesPerSecond from building counts to ensure consistency
+    CookiesPerSecond = (Oma * 1) + (Farmer * 5) + (Mine * 25) + (Fabrik * 100) + (Bank * 1500) + (Planet * 10000);
+
     updateDisplay();
+
     // Start golden cookie spawning
     setInterval(spawnGoldenCookie, 6000);
 
 });
-
-
 
 
 
