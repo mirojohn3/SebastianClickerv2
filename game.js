@@ -1,438 +1,374 @@
-// =================== Spielkonstanten (versioniert) ===================
-// Wenn du Werte im Repo änderst (z.B. Preise), erhöhe GAME_VERSION.
-const GAME_VERSION = 7; // Erhöhe diesen Wert bei Änderungen an Defaults
+/**
+ * Sebastian Clicker - Refactored
+ * A simple clicker game with a modern JS structure.
+ */
 
-// Standardwerte (die du im Repo änderst). Bei Version-Änderung werden
-// die Preise aus diesen Basiswerten neu berechnet (unter Beibehalt der
-// bereits gekauften Stückzahlen). Das ermöglicht, Defaults zu ändern
-// ohne den Spielerfortschritt zu verlieren.
-const DEFAULTS = {
-    // Balanced (ausgewogen) defaults — chosen to give steady progression
-    RESET_COST: 400000000, // 400M
-    PRICE_INCREASE: 0.05,
-    GOLDEN_COOKIE_FREQ: 0.8,
-    GOLDEN_COOKIE_DURATION: 2,
+// --- UTILITIES ---
 
-    // Basispreise (für Re-Berechnung nach Version-Upgrade)
-    basePrices: {
-        // Price for 1 unit of each building (chosen ≈ 1000 cost per CPS)
-        preis_oma: 1000,         // +1 /s
-        preis_Farm: 5000,        // +5 /s
-        preis_Mine: 25000,       // +25 /s
-        preis_Fabrik: 100000,    // +100 /s
-        preis_Bank: 1500000,     // +1.500 /s
-        preis_Planet: 10000000   // +10.000 /s
-    }
-};
-
-// Create a simple signature for basePrices to detect changes made in the
-// repository (so price changes in the code are applied on reload).
-function getBasePricesSignature() {
-    return JSON.stringify(DEFAULTS.basePrices);
-}
-
-// Konstanten initial aus DEFAULTS setzen (aktuelle Version der Client-Datei)
-const RESET_COST = DEFAULTS.RESET_COST;
-const PRICE_INCREASE = DEFAULTS.PRICE_INCREASE;
-const GOLDEN_COOKIE_FREQ = DEFAULTS.GOLDEN_COOKIE_FREQ;
-const GOLDEN_COOKIE_DURATION = DEFAULTS.GOLDEN_COOKIE_DURATION;
-
-// =================== Spielvariablen ===================
-let CookieCount = 0;                // Aktuelle Anzahl Sebastians
-let CookiesPerSecond = 0;          // Sebastians pro Sekunde
-let mengecookiesproklick = 1;      // Sebastians pro Klick
-let resetCounter = 0;              // Anzahl der Resets
-let totalCookies = 0;              // Gesamtanzahl gesammelter Sebastians
-let goldenCookieTimer = null;      // Timer für Golden Sebastian
-
-// Gebäude-Zähler
-let Oma = 0;          // +1/s
-let Farmer = 0;       // +5/s
-let Mine = 0;         // +25/s
-let Fabrik = 0;       // +100/s
-let Bank = 0;         // +1.500/s
-let Planet = 0;       // +10.000/s
-
-// Gebäude-Preise (initial aus BASES)
-let preis_oma = DEFAULTS.basePrices.preis_oma;
-let preis_Farm = DEFAULTS.basePrices.preis_Farm;
-let preis_Mine = DEFAULTS.basePrices.preis_Mine;
-let preis_Fabrik = DEFAULTS.basePrices.preis_Fabrik;
-let preis_Bank = DEFAULTS.basePrices.preis_Bank;
-let preis_Planet = DEFAULTS.basePrices.preis_Planet;
-
-// =================== Hilfsfunktionen ===================
-
-// Formatiert große Zahlen leserlich
+/**
+ * Formats a number into a compact, readable format (e.g., 1.2K, 3.4M).
+ * @param {number} num - The number to format.
+ * @returns {string} The formatted number string.
+ */
 function formatNumber(num) {
-    return num.toLocaleString('de-DE');
+    if (num < 1000) return num.toFixed(0);
+    const suffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc"];
+    const i = Math.floor(Math.log10(num) / 3);
+    if (i >= suffixes.length) return "∞";
+    const shortNum = (num / Math.pow(1000, i));
+    // Zeige eine Dezimalstelle für Zahlen unter 10, ansonsten keine.
+    return (shortNum < 10 ? shortNum.toFixed(1) : shortNum.toFixed(0)) + suffixes[i];
 }
 
-// Zufallszahl zwischen min und max
+/**
+ * Returns a random integer between min (inclusive) and max (inclusive).
+ */
 function randInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Aktualisiert alle Anzeigen
-function updateDisplay() {
-    const el = id => document.getElementById(id);
-    if (el("CookieCount")) el("CookieCount").innerText = formatNumber(CookieCount);
-    if (el("PerSecond")) el("PerSecond").innerText = formatNumber(CookiesPerSecond);
-    if (el("Omacounterid")) el("Omacounterid").innerText = formatNumber(Oma);
-    if (el("Farmercookiecounterid")) el("Farmercookiecounterid").innerText = formatNumber(Farmer);
-    if (el("Minecookiecounterid")) el("Minecookiecounterid").innerText = formatNumber(Mine);
-    if (el("Fabrikcookiecounterid")) el("Fabrikcookiecounterid").innerText = formatNumber(Fabrik);
-    if (el("bankcookiecounterid")) el("bankcookiecounterid").innerText = formatNumber(Bank);
-    if (el("Planetcookiecounterid")) el("Planetcookiecounterid").innerText = formatNumber(Planet);
-    if (el("preis_oma_id")) el("preis_oma_id").innerText = formatNumber(preis_oma);
-    if (el("preis_Farm_id")) el("preis_Farm_id").innerText = formatNumber(preis_Farm);
-    if (el("preis_Mine_id")) el("preis_Mine_id").innerText = formatNumber(preis_Mine);
-    if (el("preis_Fabrik_id")) el("preis_Fabrik_id").innerText = formatNumber(preis_Fabrik);
-    if (el("preis_Bank_id")) el("preis_Bank_id").innerText = formatNumber(preis_Bank);
-    if (el("preis_Planet_id")) el("preis_Planet_id").innerText = formatNumber(preis_Planet);
-}
+// --- GAME CLASS ---
 
-// =================== Hauptspiel-Funktionen ===================
+class SebastianClickerGame {
+    /**
+     * Initializes the game, setting up state, UI elements, and event listeners.
+     */
+    constructor() {
+        this.sebastians = 0;
+        this.totalSebastians = 0;
+        this.sebastiansPerSecond = 0;
+        this.sebastiansPerClick = 1;
+        this.prestigeLevel = 0;
+        this.clicks = 0;
+        this.goldenClicks = 0;
 
-// Klick auf Sebastian
-function CookieClick() {
-    const amount = mengecookiesproklick * getClickMultiplier();
-    CookieCount += amount;
-    totalCookies += amount;
-    // Save updated values (including current game version)
-    saveAll();
-    updateDisplay();
-    createFloatingNumber(amount);
-    // achievements removed: no-op
-}
+        this.activeEffects = [];
 
-// Erstellt fliegende Bild-Animation
-function createFloatingNumber(amount) {
-    const newDiv = document.createElement("div");
-    newDiv.classList.add("floating-number");
-    
-    // Erstelle ein neues Bild-Element
-    const img = document.createElement("img");
-    // Use the same Sebastian image used elsewhere; ensures file exists on most builds
-    img.src = "Sebastian.png";
-    img.alt = "Mini Sebastian";
-    newDiv.appendChild(img);
-    
-    // Position relativ zum Big Sebastian
-    const cookie = document.getElementById("bigSebastian");
-    const rect = cookie.getBoundingClientRect();
-    const offset = 100; // Abstand vom Cookie
-    
-    // Zufällige Position und Rotation
-    newDiv.style.left = (rect.left + randInt(-offset, offset)) + "px";
-    newDiv.style.top = (rect.top + randInt(-offset, offset)) + "px";
-    newDiv.style.setProperty('--random-rotation', `${randInt(-30, 30)}deg`);
-    
-    document.body.appendChild(newDiv);
-    setTimeout(() => newDiv.classList.add("sichtbar"), 10);
-    setTimeout(() => {
-        newDiv.classList.remove("sichtbar");
-        setTimeout(() => newDiv.remove(), 1000);
-    }, 400);
-}
+        this.upgrades = {
+            oma: { name: "Oma", basePrice: 15, cps: 1, count: 0 },
+            farmer: { name: "Farmer", basePrice: 100, cps: 5, count: 0 },
+            mine: { name: "Mine", basePrice: 1200, cps: 25, count: 0 },
+            fabrik: { name: "Fabrik", basePrice: 15000, cps: 100, count: 0 },
+            bank: { name: "Bank", basePrice: 200000, cps: 1500, count: 0 },
+            planet: { name: "Planet", basePrice: 3000000, cps: 10000, count: 0 },
+        };
 
-// Golden Sebastian Funktionen
-function spawnGoldenCookie() {
-    if (Math.random() > GOLDEN_COOKIE_FREQ) return;
-    
-    const golden = document.createElement("img");
-    golden.src = "Sebastian.png";
-    golden.classList.add("goldenSebastian");
-    
-    // Zufällige Position am Bildschirm
-    const maxX = window.innerWidth - 128;
-    const maxY = window.innerHeight - 128;
-    golden.style.left = randInt(0, maxX) + "px";
-    golden.style.top = randInt(0, maxY) + "px";
-    
-    golden.onclick = () => {
-        const effects = [
-            { name: "Frenzy", multiplier: 7, duration: 77 },
-            { name: "Lucky", cookies: Math.min(CookieCount * 0.1, CookiesPerSecond * 900) },
-            { name: "Click Frenzy", clickMultiplier: 777, duration: 13 }
-        ];
-        
-        const effect = effects[Math.floor(Math.random() * effects.length)];
-        applyGoldenCookieEffect(effect);
-        golden.remove();
-    };
-    
-    document.getElementById("goldenCookieContainer").appendChild(golden);
-    setTimeout(() => golden.remove(), GOLDEN_COOKIE_DURATION * 1000);
-}
+        this.dom = {
+            sebastianCount: document.getElementById("CookieCount"),
+            cpsCount: document.getElementById("PerSecond"),
+            bigSebastian: document.getElementById("bigSebastian"),
+            productsContainer: document.getElementById("products"),
+            prestigeButton: document.getElementById("prestigeButton"),
+            resetButton: document.getElementById("resetStorageButton"),
+            goldenCookieContainer: document.getElementById("goldenCookieContainer"),
+            // Stats
+            totalSebastiansStat: document.getElementById("totalSebastians"),
+            totalClicksStat: document.getElementById("totalClicks"),
+            goldenClicksStat: document.getElementById("goldenClicks"),
+            activeEffectsContainer: document.getElementById("activeEffects"),
+        };
 
-// Effekte von Golden Sebastian
-let activeEffects = [];
+        this.loadGame();
+        this.bindEvents();
+        this.recalculateCPS();
+        this.updateUI();
 
-function applyGoldenCookieEffect(effect) {
-    if (effect.name === "Lucky") {
-        CookieCount += effect.cookies;
-        totalCookies += effect.cookies;
-        createFloatingNumber(effect.cookies);
-    } else {
-        activeEffects.push(effect);
+        // Game loops
+        setInterval(() => this.gameTick(), 1000);
+        setInterval(() => this.updateUI(), 100);
+        setInterval(() => this.spawnGoldenCookie(), 15000); // Try to spawn every 15s
+    }
+
+    /**
+     * Binds all necessary event listeners.
+     */
+    bindEvents() {
+        this.dom.bigSebastian.addEventListener("click", (e) => this.handleBigSebastianClick(e));
+        this.dom.productsContainer.addEventListener("click", (e) => this.handleStoreClick(e));
+        this.dom.resetButton.addEventListener("click", () => this.resetGame());
+    }
+
+    /**
+     * Handles clicks on the main clicker element.
+     */
+    handleBigSebastianClick(e) {
+        const clickValue = this.getClickValue();
+        this.sebastians += clickValue;
+        this.totalSebastians += clickValue;
+        this.clicks++;
+        this.createFloatingNumber(clickValue, e.clientX, e.clientY);
+        this.updateUI(); // Immediate feedback
+    }
+
+    getClickValue() {
+        let multiplier = 1;
+        this.activeEffects.forEach(effect => {
+            if (effect.clickMultiplier) {
+                multiplier *= effect.clickMultiplier;
+            }
+        });
+        return this.sebastiansPerClick * multiplier;
+    }
+
+    /**
+     * Handles clicks within the store panel, delegating to buy upgrades.
+     */
+    handleStoreClick(e) {
+        const productButton = e.target.closest(".product");
+        if (productButton) {
+            const upgradeKey = productButton.dataset.upgrade;
+            if (upgradeKey) {
+                this.buyUpgrade(upgradeKey);
+            }
+        }
+    }
+
+    /**
+     * Calculates the current price of an upgrade.
+     */
+    getUpgradePrice(key) {
+        const upgrade = this.upgrades[key];
+        return Math.ceil(upgrade.basePrice * Math.pow(1.15, upgrade.count));
+    }
+
+    /**
+     * Attempts to buy an upgrade.
+     */
+    buyUpgrade(key) {
+        const upgrade = this.upgrades[key];
+        const price = this.getUpgradePrice(key);
+
+        if (this.sebastians >= price) {
+            this.sebastians -= price;
+            upgrade.count++;
+            this.recalculateCPS();
+            this.updateUI();
+        }
+    }
+
+    /**
+     * Recalculates the total Sebastians per second.
+     */
+    recalculateCPS() {
+        this.sebastiansPerSecond = Object.values(this.upgrades).reduce((total, upg) => {
+            return total + upg.cps * upg.count;
+        }, 0);
+    }
+
+    /**
+     * The main game tick, called once per second.
+     */
+    gameTick() {
+        const production = this.getProductionValue();
+        this.sebastians += production;
+        this.totalSebastians += production;
+        this.saveGame();
+    }
+
+    getProductionValue() {
+        let multiplier = 1;
+        this.activeEffects.forEach(effect => {
+            if (effect.productionMultiplier) {
+                multiplier *= effect.productionMultiplier;
+            }
+        });
+        return this.sebastiansPerSecond * multiplier;
+    }
+
+    /**
+     * Updates all visible parts of the UI.
+     */
+    updateUI() {
+        const sebastians = Math.floor(this.sebastians);
+        this.dom.sebastianCount.textContent = formatNumber(sebastians);
+        this.dom.cpsCount.textContent = formatNumber(this.getProductionValue());
+        document.title = `${formatNumber(sebastians)} Sebastians - Sebastian Clicker`;
+
+        for (const key in this.upgrades) {
+            const upgrade = this.upgrades[key];
+            const price = this.getUpgradePrice(key);
+            const productButton = this.dom.productsContainer.querySelector(`[data-upgrade="${key}"]`);
+
+            if (productButton) {
+                productButton.querySelector('.price span').textContent = formatNumber(price);
+                productButton.querySelector('.owned span').textContent = upgrade.count;
+                productButton.disabled = this.sebastians < price;
+            }
+        }
+
+        // Update stats
+        this.dom.totalSebastiansStat.textContent = formatNumber(Math.floor(this.totalSebastians));
+        this.dom.totalClicksStat.textContent = formatNumber(this.clicks);
+        this.dom.goldenClicksStat.textContent = formatNumber(this.goldenClicks);
+
+        // Update active effects display
+        this.updateActiveEffectsUI();
+    }
+
+    /**
+     * Spawns a golden sebastian at a random position.
+     */
+    spawnGoldenCookie() {
+        if (Math.random() > 0.3) return; // 30% chance every 15 seconds
+
+        const goldenCookie = document.createElement("div");
+        goldenCookie.className = "golden-sebastian";
+        const x = randInt(10, 90);
+        const y = randInt(10, 90);
+        goldenCookie.style.left = `${x}vw`;
+        goldenCookie.style.top = `${y}vh`;
+
+        goldenCookie.addEventListener('click', () => {
+            this.handleGoldenCookieClick();
+            goldenCookie.remove();
+        });
+
+        this.dom.goldenCookieContainer.appendChild(goldenCookie);
+
         setTimeout(() => {
-            const index = activeEffects.indexOf(effect);
-            if (index > -1) activeEffects.splice(index, 1);
-        }, effect.duration * 1000);
+            goldenCookie.remove();
+        }, 10000); // Despawns after 10 seconds
     }
-    
-    updateDisplay();
-    saveAll();
-}
 
-// Berechnet aktuelle Multiplikatoren
-function getClickMultiplier() {
-    let multiplier = 1;
-    for (const effect of activeEffects) {
-        if (effect.clickMultiplier) multiplier *= effect.clickMultiplier;
+    handleGoldenCookieClick() {
+        this.goldenClicks++;
+        const effects = [
+            { name: "Frenzy", productionMultiplier: 7, duration: 77, description: "7x Produktion!" },
+            { name: "Click Frenzy", clickMultiplier: 777, duration: 13, description: "777x Klicks!" },
+            { name: "Lucky", type: "instant", description: "Glück gehabt!" }
+        ];
+
+        const effect = effects[randInt(0, effects.length - 1)];
+
+        if (effect.type === "instant") {
+            const reward = Math.min(this.sebastians * 0.15, this.sebastiansPerSecond * 900) + 13;
+            this.sebastians += reward;
+            this.createFloatingNumber(reward, window.innerWidth / 2, window.innerHeight / 2);
+        } else {
+            this.addEffect(effect);
+        }
     }
-    return multiplier;
-}
 
-function getCPSMultiplier() {
-    let multiplier = 1;
-    for (const effect of activeEffects) {
-        if (effect.multiplier) multiplier *= effect.multiplier;
+    addEffect(effect) {
+        const existingEffect = this.activeEffects.find(e => e.name === effect.name);
+        if (existingEffect) {
+            existingEffect.duration = effect.duration; // Reset duration
+        } else {
+            this.activeEffects.push({ ...effect,
+                endTime: Date.now() + effect.duration * 1000
+            });
+        }
     }
-    return multiplier;
-}
 
-// Automatische Produktion pro Sekunde
-setInterval(() => {
-    const production = CookiesPerSecond * getCPSMultiplier();
-    CookieCount += production;
-    totalCookies += production;
-    // Persist production changes
-    saveAll();
-    updateDisplay();
-}, 1000);
+    updateActiveEffectsUI() {
+        this.dom.activeEffectsContainer.innerHTML = "";
+        const now = Date.now();
 
-// =================== Upgrade-Funktionen ===================
+        this.activeEffects = this.activeEffects.filter(effect => effect.endTime > now);
 
-// Generische Upgrade-Funktion
-function upgrade(cost, count, costId, counterId, perSecond) {
-    if (CookieCount >= cost) {
-        CookieCount -= cost;
-        CookiesPerSecond += perSecond;
-        count++;
-        cost = Math.ceil(cost * (1 + PRICE_INCREASE));
-        
-        // Save and include version
-        saveAll(); // includes saveGameState + saveGameVersion
-        updateDisplay();
-        return { newCost: cost, newCount: count };
-    } else {
-        alert("Nicht genug Sebastians! Sammle weiter!");
-        return null;
+        this.activeEffects.forEach(effect => {
+            const remaining = Math.ceil((effect.endTime - now) / 1000);
+            const effectDiv = document.createElement('div');
+            effectDiv.className = 'effect-badge';
+            effectDiv.textContent = `${effect.description} (${remaining}s)`;
+            this.dom.activeEffectsContainer.appendChild(effectDiv);
+        });
     }
-}
 
-// Spezifische Upgrade-Funktionen
-function OmaUpgrade() {
-    const result = upgrade(preis_oma, Oma, "preis_oma", "Omacookiecounter", 1);
-    if (result) {
-        preis_oma = result.newCost;
-        Oma = result.newCount;
+    /**
+     * Creates a floating number animation at the click position.
+     */
+    createFloatingNumber(amount, x, y) {
+        const numberDiv = document.createElement("div");
+        numberDiv.className = "floating-number";
+        numberDiv.textContent = `+${formatNumber(Math.floor(amount))}`;
+        numberDiv.style.left = `${x}px`;
+        numberDiv.style.top = `${y}px`;
+        numberDiv.style.setProperty('--random-rotation', `${randInt(-15, 15)}deg`);
+
+        document.body.appendChild(numberDiv);
+
+        setTimeout(() => {
+            numberDiv.classList.add("sichtbar");
+        }, 10);
+
+        setTimeout(() => {
+            numberDiv.remove();
+        }, 2000);
     }
-}
 
-function FarmerUpgrade() {
-    const result = upgrade(preis_Farm, Farmer, "preis_Farm", "Farmercookiecounter", 5);
-    if (result) {
-        preis_Farm = result.newCost;
-        Farmer = result.newCount;
+    /**
+     * Saves the current game state to localStorage.
+     */
+    saveGame() {
+        const gameState = {
+            sebastians: this.sebastians,
+            totalSebastians: this.totalSebastians,
+            prestigeLevel: this.prestigeLevel,
+            clicks: this.clicks,
+            goldenClicks: this.goldenClicks,
+            upgrades: this.upgrades,
+        };
+        try {
+            localStorage.setItem("sebastianClickerSave", JSON.stringify(gameState));
+        } catch (e) {
+            console.error("Failed to save game state:", e);
+        }
     }
-}
 
-function MineUpgrade() {
-    const result = upgrade(preis_Mine, Mine, "preis_Mine", "Minecookiecounter", 25);
-    if (result) {
-        preis_Mine = result.newCost;
-        Mine = result.newCount;
+    /**
+     * Loads game state from localStorage.
+     */
+    loadGame() {
+        try {
+            const savedState = localStorage.getItem("sebastianClickerSave");
+            if (savedState) {
+                const gameState = JSON.parse(savedState);
+                this.sebastians = gameState.sebastians || 0;
+                this.totalSebastians = gameState.totalSebastians || 0;
+                this.prestigeLevel = gameState.prestigeLevel || 0;
+                this.clicks = gameState.clicks || 0;
+                this.goldenClicks = gameState.goldenClicks || 0;
+
+                if (gameState.upgrades) {
+                    for (const key in this.upgrades) {
+                        if (gameState.upgrades[key]) {
+                            this.upgrades[key] = { ...this.upgrades[key], ...gameState.upgrades[key] };
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Failed to load game state:", e);
+            this.resetGame();
+        }
     }
-}
 
-function FabrikUpgrade() {
-    const result = upgrade(preis_Fabrik, Fabrik, "preis_Fabrik", "Fabrikcookiecounter", 100);
-    if (result) {
-        preis_Fabrik = result.newCost;
-        Fabrik = result.newCount;
-    }
-}
-
-function BankUpgrade() {
-    const result = upgrade(preis_Bank, Bank, "preis_Bank", "bankcookiecounter", 1500);
-    if (result) {
-        preis_Bank = result.newCost;
-        Bank = result.newCount;
-    }
-}
-
-function PlanetUpgrade() {
-    const result = upgrade(preis_Planet, Planet, "preis_Planet", "Planetcookiecounter", 10000);
-    if (result) {
-        preis_Planet = result.newCost;
-        Planet = result.newCount;
-    }
-}
-
-// Achievements and milk removed — simplified game state.
-
-// =================== Reset und Speicher-Funktionen ===================
-
-// Reset-Funktion (Prestige)
-function resetleck() {
-    if (CookieCount >= RESET_COST) {
-        mengecookiesproklick *= 2;
-        resetCounter++;
-        
-        // Zurücksetzen aller Werte
-        CookieCount = 0;
-        CookiesPerSecond = 0;
-        Oma = 0;
-        Farmer = 0;
-        Mine = 0;
-        Fabrik = 0;
-        Bank = 0;
-        Planet = 0;
-        
-        // Preise zurücksetzen
-        // Set prices to current default base prices (recomputed for zero owned)
-        preis_oma = Math.ceil(DEFAULTS.basePrices.preis_oma * Math.pow(1 + PRICE_INCREASE, Oma));
-        preis_Farm = Math.ceil(DEFAULTS.basePrices.preis_Farm * Math.pow(1 + PRICE_INCREASE, Farmer));
-        preis_Mine = Math.ceil(DEFAULTS.basePrices.preis_Mine * Math.pow(1 + PRICE_INCREASE, Mine));
-        preis_Fabrik = Math.ceil(DEFAULTS.basePrices.preis_Fabrik * Math.pow(1 + PRICE_INCREASE, Fabrik));
-        preis_Bank = Math.ceil(DEFAULTS.basePrices.preis_Bank * Math.pow(1 + PRICE_INCREASE, Bank));
-        preis_Planet = Math.ceil(DEFAULTS.basePrices.preis_Planet * Math.pow(1 + PRICE_INCREASE, Planet));
-
-        // Alles speichern (inkl. version)
-    localStorage.setItem("mengecookiesproklick", mengecookiesproklick);
-    localStorage.setItem("resetCounter", resetCounter);
-        saveAll();
-        updateDisplay();
-    } else {
-        alert("Du brauchst " + formatNumber(RESET_COST) + " Sebastians für einen Reset!");
+    /**
+     * Resets the game state and clears localStorage.
+     */
+    resetGame() {
+        if (confirm("Möchtest du wirklich deinen gesamten Fortschritt zurücksetzen?")) {
+            this.sebastians = 0;
+            this.totalSebastians = 0;
+            this.prestigeLevel = 0;
+            this.clicks = 0;
+            this.goldenClicks = 0;
+            for (const key in this.upgrades) {
+                this.upgrades[key].count = 0;
+            }
+            this.recalculateCPS();
+            this.saveGame();
+            location.reload();
+        }
     }
 }
 
-// Speicher löschen
-function deletestorage() {
-    if (confirm("Möchtest du wirklich den gesamten Spielstand löschen?")) {
-        localStorage.clear();
-        location.reload();
-    }
-}
+// --- INITIALIZATION ---
 
-// Spielstand speichern
-function saveGameState() {
-    const variables = {
-        // Save using consistent key names so load/restore works reliably
-        CookieCount: CookieCount,
-        CookiesPerSecond: CookiesPerSecond,
-        mengecookiesproklick: mengecookiesproklick,
-        resetCounter: resetCounter,
-        totalCookies: totalCookies,
-
-        Oma: Oma,
-        Farmer: Farmer,
-        Mine: Mine,
-        Fabrik: Fabrik,
-        Bank: Bank,
-        Planet: Planet,
-
-        preis_oma: preis_oma,
-        preis_Farm: preis_Farm,
-        preis_Mine: preis_Mine,
-        preis_Fabrik: preis_Fabrik,
-        preis_Bank: preis_Bank,
-        preis_Planet: preis_Planet
-    };
-
-    for (const [key, value] of Object.entries(variables)) {
-        // store as string (LocalStorage only stores strings)
-        localStorage.setItem(key, String(value));
-    }
-}
-
-// Speichere auch die aktuell verwendete DEFAULTS-Version
-function saveGameVersion() {
-    localStorage.setItem('gameVersion', GAME_VERSION);
-    // Also persist the current basePrices signature so we can detect
-    // code-side price changes without relying solely on GAME_VERSION.
-    localStorage.setItem('basePricesSignature', getBasePricesSignature());
-}
-
-// Kombiniere saveGameState und gameVersion
-function saveAll() {
-    saveGameState();
-    saveGameVersion();
-}
-
-// Spielstand laden
-window.addEventListener("DOMContentLoaded", () => {
-    // Load saved version and decide if migration is required
-    const savedVersion = parseInt(localStorage.getItem('gameVersion')) || 0;
-
-    // Load basic saved values (if exist)
-    CookieCount = parseFloat(localStorage.getItem("CookieCount")) || CookieCount;
-    CookiesPerSecond = parseFloat(localStorage.getItem("CookiesPerSecond")) || CookiesPerSecond;
-    mengecookiesproklick = parseFloat(localStorage.getItem("mengecookiesproklick")) || mengecookiesproklick;
-    resetCounter = parseInt(localStorage.getItem("resetCounter")) || resetCounter;
-    totalCookies = parseFloat(localStorage.getItem("totalCookies")) || totalCookies;
-
-    // Load building counts (keys saved as 'Oma', 'Farmer', ...)
-    Oma = parseInt(localStorage.getItem("Oma")) || Oma;
-    Farmer = parseInt(localStorage.getItem("Farmer")) || Farmer;
-    Mine = parseInt(localStorage.getItem("Mine")) || Mine;
-    Fabrik = parseInt(localStorage.getItem("Fabrik")) || Fabrik;
-    Bank = parseInt(localStorage.getItem("Bank")) || Bank;
-    Planet = parseInt(localStorage.getItem("Planet")) || Planet;
-
-    // If the stored gameVersion differs from the current GAME_VERSION,
-    // or the basePrices in the code were changed (signature mismatch),
-    // migrate price/defaults while preserving progress.
-    const savedBaseSig = localStorage.getItem('basePricesSignature') || null;
-    const currentBaseSig = getBasePricesSignature();
-
-    if (savedVersion !== GAME_VERSION || savedBaseSig !== currentBaseSig) {
-        // Recompute prices from fresh base prices and owned counts
-        preis_oma = Math.ceil(DEFAULTS.basePrices.preis_oma * Math.pow(1 + PRICE_INCREASE, Oma));
-        preis_Farm = Math.ceil(DEFAULTS.basePrices.preis_Farm * Math.pow(1 + PRICE_INCREASE, Farmer));
-        preis_Mine = Math.ceil(DEFAULTS.basePrices.preis_Mine * Math.pow(1 + PRICE_INCREASE, Mine));
-        preis_Fabrik = Math.ceil(DEFAULTS.basePrices.preis_Fabrik * Math.pow(1 + PRICE_INCREASE, Fabrik));
-        preis_Bank = Math.ceil(DEFAULTS.basePrices.preis_Bank * Math.pow(1 + PRICE_INCREASE, Bank));
-        preis_Planet = Math.ceil(DEFAULTS.basePrices.preis_Planet * Math.pow(1 + PRICE_INCREASE, Planet));
-        // Apply any new constants from DEFAULTS (so changes to RESET_COST, frequencies, etc. take effect)
-        // (we keep player-specific values such as mengecookiesproklick and resetCounter)
-        // Save migrated state back to localStorage so future loads are consistent
-        saveAll();
-    } else {
-        // No migration needed; load prices if present
-        preis_oma = parseInt(localStorage.getItem("preis_oma")) || preis_oma;
-        preis_Farm = parseInt(localStorage.getItem("preis_Farm")) || preis_Farm;
-        preis_Mine = parseInt(localStorage.getItem("preis_Mine")) || preis_Mine;
-        preis_Fabrik = parseInt(localStorage.getItem("preis_Fabrik")) || preis_Fabrik;
-        preis_Bank = parseInt(localStorage.getItem("preis_Bank")) || preis_Bank;
-        preis_Planet = parseInt(localStorage.getItem("preis_Planet")) || preis_Planet;
-    }
-
-    // Recompute CookiesPerSecond from building counts to ensure consistency
-    CookiesPerSecond = (Oma * 1) + (Farmer * 5) + (Mine * 25) + (Fabrik * 100) + (Bank * 1500) + (Planet * 10000);
-
-    updateDisplay();
-
-    // Start golden cookie spawning
-    setInterval(spawnGoldenCookie, 6000);
-
+document.addEventListener("DOMContentLoaded", () => {
+    new SebastianClickerGame();
 });
-
-
 
 
 
