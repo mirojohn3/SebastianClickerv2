@@ -230,28 +230,35 @@ body {
 /* Orbiting Cursors */
 #cursor-orbit-container {
     position: absolute;
-    width: 100%;
-    height: 100%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1px;
+    height: 1px;
     pointer-events: none;
-    animation: rotate 30s linear infinite;
 }
 
 .orbiting-cursor {
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 0;
+    left: 0;
     width: 40px; /* Size of the cursor image */
     height: 40px;
     background-image: url('cursor.webp');
     background-size: contain;
     transform-origin: center;
     /* The magic: move it out from the center and then rotate it */
-    transform: translate(-50%, -50%) translateY(var(--orbit-radius)) rotate(var(--rotation));
+    transform: rotate(var(--initial-rotation)) translateY(var(--orbit-radius)) rotate(calc(-1 * var(--initial-rotation)));
+    animation: orbit var(--orbit-duration) linear infinite;
 }
 
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+@keyframes orbit {
+    from {
+        transform: rotate(var(--initial-rotation)) translateY(var(--orbit-radius)) rotate(calc(-1 * var(--initial-rotation)));
+    }
+    to {
+        transform: rotate(calc(var(--initial-rotation) + 360deg)) translateY(var(--orbit-radius)) rotate(calc(-1 * var(--initial-rotation) - 360deg));
+    }
 }
 
 
