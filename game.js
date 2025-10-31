@@ -19,7 +19,7 @@ const DEFAULTS = {
         preis_Mine: 500000,
         preis_Fabrik: 550000,
         preis_Bank: 100000000,
-        preis_Planet: 100000000
+        preis_Planet: 1
     }
 };
 
@@ -393,6 +393,7 @@ window.addEventListener("DOMContentLoaded", () => {
     setInterval(spawnGoldenCookie, 6000);
 
 });
+
 
 
 
