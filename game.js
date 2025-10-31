@@ -1,6 +1,6 @@
 // =================== Spielkonstanten (versioniert) ===================
 // Wenn du Werte im Repo änderst (z.B. Preise), erhöhe GAME_VERSION.
-const GAME_VERSION = 1; // Erhöhe diesen Wert bei Änderungen an Defaults
+const GAME_VERSION = 2; // Erhöhe diesen Wert bei Änderungen an Defaults
 
 // Standardwerte (die du im Repo änderst). Bei Version-Änderung werden
 // die Preise aus diesen Basiswerten neu berechnet (unter Beibehalt der
@@ -393,5 +393,6 @@ window.addEventListener("DOMContentLoaded", () => {
     setInterval(spawnGoldenCookie, 60000);
 
 });
+
 
 
