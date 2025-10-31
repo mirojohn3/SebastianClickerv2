@@ -273,9 +273,11 @@ class SebastianClickerGame {
             cursor.className = 'orbiting-cursor';
 
             const angle = (360 / visibleCursors) * i;
+            const animationDelay = -(30 / visibleCursors) * i; // Stagger animation
 
             cursor.style.setProperty('--orbit-radius', `${orbitRadius}px`);
             cursor.style.setProperty('--rotation', `${angle}deg`);
+            cursor.style.animationDelay = `${animationDelay}s`;
 
             this.dom.cursorOrbitContainer.appendChild(cursor);
         }
