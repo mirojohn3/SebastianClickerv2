@@ -1,129 +1,155 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sebastian Clicker - Das Spiel</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sebastian Clicker</title>
     <link rel="stylesheet" href="style.css">
+    <meta name="description" content="Ein kleiner Clicker mit Sebastian. Gespeichert wird im Browser-LocalStorage.">
 </head>
 <body>
-    <div id="game">
-        
-        <!-- Left Section: Store -->
-        <div id="store">
-            <div id="storeTitle">Shop</div>
+    <div id="game" role="application" aria-labelledby="game-title">
+        <header class="visually-hidden">
+            <h1 id="game-title">Sebastian Clicker</h1>
+        </header>
+
+        <!-- Left: Store -->
+        <aside id="store" class="panel" aria-label="Shop">
+            <h2 id="storeTitle">Shop</h2>
             <div id="products">
-                <div class="product" onclick="OmaUpgrade()">
+                <!-- Product buttons are managed by game.js -->
+                <button class="product" data-upgrade="oma" type="button">
                     <div class="icon">👵</div>
                     <div class="content">
                         <div class="title">Oma</div>
                         <div class="description">Erzeugt +1 / Sek.</div>
                     </div>
                     <div class="meta">
-                            <div class="badge price" title="Preis"><span class="badge-icon">💰</span><span id="preis_oma_id">75</span></div>
-                            <div class="badge owned" title="Anzahl"><span class="badge-icon">🔢</span><span id="Omacounterid">0</span></div>
+                        <div class="badge price">💰 <span>0</span></div>
+                        <div class="badge owned">🔢 <span>0</span></div>
                     </div>
-                </div>
-                <div class="product" onclick="FarmerUpgrade()">
+                </button>
+
+                <button class="product" data-upgrade="farmer" type="button">
                     <div class="icon">👨‍🌾</div>
                     <div class="content">
                         <div class="title">Farmer</div>
                         <div class="description">Erzeugt +5 / Sek.</div>
                     </div>
                     <div class="meta">
-                            <div class="badge price" title="Preis"><span class="badge-icon">💰</span><span id="preis_Farm_id">500</span></div>
-                            <div class="badge owned" title="Anzahl"><span class="badge-icon">🔢</span><span id="Farmercookiecounterid">0</span></div>
+                        <div class="badge price">💰 <span>0</span></div>
+                        <div class="badge owned">🔢 <span>0</span></div>
                     </div>
-                </div>
-                <div class="product" onclick="MineUpgrade()">
+                </button>
+
+                <button class="product" data-upgrade="mine" type="button">
                     <div class="icon">⛏️</div>
                     <div class="content">
                         <div class="title">Mine</div>
                         <div class="description">Erzeugt +25 / Sek.</div>
                     </div>
                     <div class="meta">
-                            <div class="badge price" title="Preis"><span class="badge-icon">💰</span><span id="preis_Mine_id">5000</span></div>
-                            <div class="badge owned" title="Anzahl"><span class="badge-icon">🔢</span><span id="Minecookiecounterid">0</span></div>
+                        <div class="badge price">💰 <span>0</span></div>
+                        <div class="badge owned">🔢 <span>0</span></div>
                     </div>
-                </div>
-                <div class="product" onclick="FabrikUpgrade()">
+                </button>
+
+                <button class="product" data-upgrade="fabrik" type="button">
                     <div class="icon">🏭</div>
                     <div class="content">
                         <div class="title">Fabrik</div>
                         <div class="description">Erzeugt +100 / Sek.</div>
                     </div>
                     <div class="meta">
-                            <div class="badge price" title="Preis"><span class="badge-icon">💰</span><span id="preis_Fabrik_id">75000</span></div>
-                            <div class="badge owned" title="Anzahl"><span class="badge-icon">🔢</span><span id="Fabrikcookiecounterid">0</span></div>
+                        <div class="badge price">💰 <span>0</span></div>
+                        <div class="badge owned">🔢 <span>0</span></div>
                     </div>
-                </div>
-                <div class="product" onclick="BankUpgrade()">
+                </button>
+
+                <button class="product" data-upgrade="bank" type="button">
                     <div class="icon">🏦</div>
                     <div class="content">
                         <div class="title">Bank</div>
                         <div class="description">Erzeugt +1.500 / Sek.</div>
                     </div>
                     <div class="meta">
-                            <div class="badge price" title="Preis"><span class="badge-icon">💰</span><span id="preis_Bank_id">1000000</span></div>
-                            <div class="badge owned" title="Anzahl"><span class="badge-icon">🔢</span><span id="bankcookiecounterid">0</span></div>
+                        <div class="badge price">💰 <span>0</span></div>
+                        <div class="badge owned">🔢 <span>0</span></div>
                     </div>
-                </div>
-                <div class="product" onclick="PlanetUpgrade()">
+                </button>
+
+                <button class="product" data-upgrade="planet" type="button">
                     <div class="icon">🌍</div>
                     <div class="content">
                         <div class="title">Planet</div>
                         <div class="description">Erzeugt +10.000 / Sek.</div>
                     </div>
                     <div class="meta">
-                            <div class="badge price" title="Preis"><span class="badge-icon">💰</span><span id="preis_Planet_id">1000000000</span></div>
-                            <div class="badge owned" title="Anzahl"><span class="badge-icon">🔢</span><span id="Planetcookiecounterid">0</span></div>
+                        <div class="badge price">💰 <span>0</span></div>
+                        <div class="badge owned">🔢 <span>0</span></div>
                     </div>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Center -->
+        <main id="gameCenter" role="main">
+            <section id="sebastians" aria-live="polite" class="counter-wrap">
+                <div class="counter-icon-wrapper">
+                    <img src="Sebastian.png" class="counter-icon" alt="" width="48" height="48" />
+                </div>
+                <div class="counter-number"><span id="CookieCount">0</span></div>
+                <div id="cps" class="cps-badge" title="pro Sekunde">
+                    ⚡ <span id="PerSecond">0</span>/s
+                </div>
+            </section>
+
+            <section id="bigSebastianContainer" aria-label="Klicke auf Sebastian">
+                <button id="bigSebastian" class="big-sebastian-button">
+                    <img src="Sebastian.png" draggable="false" alt="Sebastian zum Klicken" width="256" height="256" />
+                </button>
+            </section>
+
+            <div id="goldenCookieContainer" aria-hidden="true"></div>
+        </main>
+
+        <!-- Right: Prestige -->
+        <aside id="rightPanel" class="panel" aria-label="Statistiken und Prestige">
+            <div id="stats">
+                <h2 class="panelTitle">Statistiken</h2>
+                <div class="stat-item">
+                    <span>Totale Sebastians</span>
+                    <span id="totalSebastians">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Manuelle Klicks</span>
+                    <span id="totalClicks">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Goldene Sebastians</span>
+                    <span id="goldenClicks">0</span>
                 </div>
             </div>
-        </div>
-
-        <!-- Center Section: Main Game -->
-        <div id="gameCenter">
-            <!-- Stats Bar -->
-            <div id="cookies">
-                <div id="cookieCounter" class="counter-wrap">
-                    <img src="Sebastian.png" class="counter-icon" alt="Sebastian" width="48" height="48" />
-                    <div class="counter-number"><span id="CookieCount">0</span></div>
-                </div>
-                <div id="cps">
-                    <div class="cps-badge" title="pro Sekunde">⚡ <span id="PerSecond">0</span>/s</div>
-                </div>
-            </div>
-
-            <!-- Main Clicker -->
-            <div id="bigCookie">
-                <img src="Sebastian.png" id="bigSebastian" onclick="CookieClick()" draggable="false" alt="Sebastian zum Klicken" width="256" height="256" />
-            </div>
-
-            <!-- Golden Sebastian Container -->
-            <div id="goldenCookieContainer"></div>
-        </div>
-
-        <!-- Right Section: Prestige only -->
-        <div id="rightPanel">
-            <!-- Prestige Section -->
             <div id="prestige">
-                <div class="panelTitle">Prestige</div>
-                <div class="prestige-badges" style="display:flex;gap:8px;margin-bottom:10px">
+                <h2 class="panelTitle">Prestige</h2>
+                <div class="prestige-badges">
                     <div class="badge price" title="Nächster Bonus">+1 ⚡</div>
                     <div class="badge owned" title="Benötigt">400B</div>
                 </div>
-                <button onclick="resetleck()" class="prestige-button">🔄</button>
+                <button id="prestigeButton" class="prestige-button" type="button" aria-label="Prestige">🔄</button>
             </div>
-        </div>
+        </aside>
     </div>
 
+    <!-- Active Effects -->
+    <div id="activeEffects" class="effects-container"></div>
+
     <!-- Settings Button -->
-    <button onclick="deletestorage()" class="settings-button" title="Speicher löschen">
+    <button id="resetStorageButton" class="settings-button" title="Speicher löschen" aria-label="Speicher löschen">
         ⚙️
     </button>
 
-    <!-- JavaScript einbinden -->
-    <script src="game.js"></script>
+    <!-- Script -->
+    <script src="game.js" defer></script>
 </body>
 </html>
