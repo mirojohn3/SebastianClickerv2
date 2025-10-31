@@ -7,19 +7,21 @@ const GAME_VERSION = 4; // Erhöhe diesen Wert bei Änderungen an Defaults
 // bereits gekauften Stückzahlen). Das ermöglicht, Defaults zu ändern
 // ohne den Spielerfortschritt zu verlieren.
 const DEFAULTS = {
-    RESET_COST: 40000000,
+    // Balanced (ausgewogen) defaults — chosen to give steady progression
+    RESET_COST: 400000000, // 400M
     PRICE_INCREASE: 0.05,
     GOLDEN_COOKIE_FREQ: 0.8,
     GOLDEN_COOKIE_DURATION: 2,
 
     // Basispreise (für Re-Berechnung nach Version-Upgrade)
     basePrices: {
-        preis_oma: 5000,
-        preis_Farm: 50000,
-        preis_Mine: 500000,
-        preis_Fabrik: 550000,
-        preis_Bank: 100000000,
-        preis_Planet: 1
+        // Price for 1 unit of each building (chosen ≈ 1000 cost per CPS)
+        preis_oma: 1000,         // +1 /s
+        preis_Farm: 5000,        // +5 /s
+        preis_Mine: 25000,       // +25 /s
+        preis_Fabrik: 100000,    // +100 /s
+        preis_Bank: 1500000,     // +1.500 /s
+        preis_Planet: 10000000   // +10.000 /s
     }
 };
 
