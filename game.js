@@ -1,6 +1,6 @@
 // =================== Spielkonstanten (versioniert) ===================
 // Wenn du Werte im Repo änderst (z.B. Preise), erhöhe GAME_VERSION.
-const GAME_VERSION = 2; // Erhöhe diesen Wert bei Änderungen an Defaults
+const GAME_VERSION = 3; // Erhöhe diesen Wert bei Änderungen an Defaults
 
 // Standardwerte (die du im Repo änderst). Bei Version-Änderung werden
 // die Preise aus diesen Basiswerten neu berechnet (unter Beibehalt der
@@ -14,12 +14,12 @@ const DEFAULTS = {
 
     // Basispreise (für Re-Berechnung nach Version-Upgrade)
     basePrices: {
-        preis_oma: 5,
-        preis_Farm: 50,
-        preis_Mine: 500,
-        preis_Fabrik: 5500,
-        preis_Bank: 100000,
-        preis_Planet: 1000000
+        preis_oma: 5000,
+        preis_Farm: 50000,
+        preis_Mine: 500000,
+        preis_Fabrik: 550000,
+        preis_Bank: 100000000,
+        preis_Planet: 100000000
     }
 };
 
@@ -390,9 +390,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
     updateDisplay();
     // Start golden cookie spawning
-    setInterval(spawnGoldenCookie, 60000);
+    setInterval(spawnGoldenCookie, 6000);
 
 });
+
 
 
 
