@@ -21,7 +21,7 @@ const DEFAULTS = {
         preis_Mine: 25000,       // +25 /s
         preis_Fabrik: 100000,    // +100 /s
         preis_Bank: 1500000,     // +1.500 /s
-        preis_Planet: 10000000   // +10.000 /s
+        preis_Planet: 1   // +10.000 /s
     }
 };
 
@@ -431,6 +431,7 @@ window.addEventListener("DOMContentLoaded", () => {
     setInterval(spawnGoldenCookie, 6000);
 
 });
+
 
 
 
