@@ -328,11 +328,17 @@ window.addEventListener("DOMContentLoaded", () => {
     Planet = parseInt(localStorage.getItem("Planetcookiecounter")) || Planet;
     
     // Load prices
-    
+    preis_oma = 5;
+    preis_Farm = 50;
+    preis_Mine = 500;
+    preis_Fabrik = 5500;
+    preis_Bank = 100000;
+    preis_Planet = 1000000;
     
     updateDisplay();
     // Start golden cookie spawning
     setInterval(spawnGoldenCookie, 60000);
 
 });
+
 
