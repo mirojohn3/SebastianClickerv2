@@ -8,16 +8,30 @@
     <meta name="description" content="Ein kleiner Clicker mit Sebastian. Gespeichert wird im Browser-LocalStorage.">
 </head>
 <body>
+    <div id="sebastian-rain-container" aria-hidden="true"></div>
     <div id="game" role="application" aria-labelledby="game-title">
         <header class="visually-hidden">
             <h1 id="game-title">Sebastian Clicker</h1>
         </header>
 
         <!-- Left: Store -->
-        <aside id="store" class="panel" aria-label="Shop">
-            <h2 id="storeTitle">Shop</h2>
+        <aside id="leftPanel" class="panel" aria-label="Shop">
+            <h2 class="panelTitle">Shop</h2>
             <div id="products">
-                <!-- Product buttons are managed by game.js -->
+                <!-- Click Upgrade -->
+                <button class="product" data-upgrade="click" type="button">
+                    <div class="icon">🖱️</div>
+                    <div class="content">
+                        <div class="title">Stärkere Mauszeiger</div>
+                        <div class="description">Erhöht Sebastians pro Klick</div>
+                    </div>
+                    <div class="meta">
+                        <div class="badge price">💰 <span>0</span></div>
+                        <div class="badge owned"> Lvl <span>1</span></div>
+                    </div>
+                </button>
+
+                <!-- Buildings -->
                 <button class="product" data-upgrade="oma" type="button">
                     <div class="icon">👵</div>
                     <div class="content">
@@ -34,7 +48,7 @@
                     <div class="icon">👨‍🌾</div>
                     <div class="content">
                         <div class="title">Farmer</div>
-                        <div class="description">Erzeugt +5 / Sek.</div>
+                        <div class="description">Erzeugt +8 / Sek.</div>
                     </div>
                     <div class="meta">
                         <div class="badge price">💰 <span>0</span></div>
@@ -46,7 +60,7 @@
                     <div class="icon">⛏️</div>
                     <div class="content">
                         <div class="title">Mine</div>
-                        <div class="description">Erzeugt +25 / Sek.</div>
+                        <div class="description">Erzeugt +47 / Sek.</div>
                     </div>
                     <div class="meta">
                         <div class="badge price">💰 <span>0</span></div>
@@ -58,7 +72,7 @@
                     <div class="icon">🏭</div>
                     <div class="content">
                         <div class="title">Fabrik</div>
-                        <div class="description">Erzeugt +100 / Sek.</div>
+                        <div class="description">Erzeugt +260 / Sek.</div>
                     </div>
                     <div class="meta">
                         <div class="badge price">💰 <span>0</span></div>
@@ -70,7 +84,7 @@
                     <div class="icon">🏦</div>
                     <div class="content">
                         <div class="title">Bank</div>
-                        <div class="description">Erzeugt +1.500 / Sek.</div>
+                        <div class="description">Erzeugt +1,400 / Sek.</div>
                     </div>
                     <div class="meta">
                         <div class="badge price">💰 <span>0</span></div>
@@ -78,11 +92,59 @@
                     </div>
                 </button>
 
-                <button class="product" data-upgrade="planet" type="button">
-                    <div class="icon">🌍</div>
+                <button class="product" data-upgrade="temple" type="button">
+                    <div class="icon">🏛️</div>
                     <div class="content">
-                        <div class="title">Planet</div>
-                        <div class="description">Erzeugt +10.000 / Sek.</div>
+                        <div class="title">Tempel</div>
+                        <div class="description">Erzeugt +7,800 / Sek.</div>
+                    </div>
+                    <div class="meta">
+                        <div class="badge price">💰 <span>0</span></div>
+                        <div class="badge owned">🔢 <span>0</span></div>
+                    </div>
+                </button>
+
+                <button class="product" data-upgrade="spaceship" type="button">
+                    <div class="icon">🚀</div>
+                    <div class="content">
+                        <div class="title">Raumschiff</div>
+                        <div class="description">Erzeugt +44,000 / Sek.</div>
+                    </div>
+                    <div class="meta">
+                        <div class="badge price">💰 <span>0</span></div>
+                        <div class="badge owned">🔢 <span>0</span></div>
+                    </div>
+                </button>
+
+                <button class="product" data-upgrade="alchemy" type="button">
+                    <div class="icon">⚗️</div>
+                    <div class="content">
+                        <div class="title">Alchemie-Labor</div>
+                        <div class="description">Erzeugt +260,000 / Sek.</div>
+                    </div>
+                    <div class="meta">
+                        <div class="badge price">💰 <span>0</span></div>
+                        <div class="badge owned">🔢 <span>0</span></div>
+                    </div>
+                </button>
+
+                <button class="product" data-upgrade="portal" type="button">
+                    <div class="icon">🌀</div>
+                    <div class="content">
+                        <div class="title">Portal</div>
+                        <div class="description">Erzeugt +1.6M / Sek.</div>
+                    </div>
+                    <div class="meta">
+                        <div class="badge price">💰 <span>0</span></div>
+                        <div class="badge owned">🔢 <span>0</span></div>
+                    </div>
+                </button>
+
+                <button class="product" data-upgrade="timeMachine" type="button">
+                    <div class="icon">⏳</div>
+                    <div class="content">
+                        <div class="title">Zeitmaschine</div>
+                        <div class="description">Erzeugt +10M / Sek.</div>
                     </div>
                     <div class="meta">
                         <div class="badge price">💰 <span>0</span></div>
@@ -105,18 +167,23 @@
             </section>
 
             <section id="bigSebastianContainer" aria-label="Klicke auf Sebastian">
-                <button id="bigSebastian" class="big-sebastian-button">
-                    <img src="Sebastian.png" draggable="false" alt="Sebastian zum Klicken" width="256" height="256" />
+                <button id="bigSebastian" class="big-sebastian-button" type="button" aria-label="Klicke auf Sebastian, um mehr zu bekommen">
+                    <img src="Sebastian.png" alt="Großer Sebastian">
                 </button>
+                <div id="cursor-orbit-container" aria-hidden="true"></div>
             </section>
 
             <div id="goldenCookieContainer" aria-hidden="true"></div>
         </main>
 
-        <!-- Right: Prestige -->
-        <aside id="rightPanel" class="panel" aria-label="Statistiken und Prestige">
+        <!-- Right: Stats -->
+        <aside id="rightPanel" class="panel" aria-label="Statistiken">
             <div id="stats">
                 <h2 class="panelTitle">Statistiken</h2>
+                <div class="stat-item">
+                    <span>Sebastians/Klick</span>
+                    <span id="spcStat">1</span>
+                </div>
                 <div class="stat-item">
                     <span>Totale Sebastians</span>
                     <span id="totalSebastians">0</span>
@@ -129,14 +196,6 @@
                     <span>Goldene Sebastians</span>
                     <span id="goldenClicks">0</span>
                 </div>
-            </div>
-            <div id="prestige">
-                <h2 class="panelTitle">Prestige</h2>
-                <div class="prestige-badges">
-                    <div class="badge price" title="Nächster Bonus">+1 ⚡</div>
-                    <div class="badge owned" title="Benötigt">400B</div>
-                </div>
-                <button id="prestigeButton" class="prestige-button" type="button" aria-label="Prestige">🔄</button>
             </div>
         </aside>
     </div>
