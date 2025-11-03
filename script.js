@@ -1,22 +1,59 @@
 // ====================================
 // GLOBALE SPIELVARIABLEN
 // ====================================
+// Ressourcen-System (3 Währungen)
 let cookies = 0;
+let stars = 0; // Neue Währung: Sterne (für Spezial-Upgrades)
+let power = 0; // Neue Währung: Macht (für Epochen-Aufstieg)
+
 let cookiesPerSecond = 0;
+let starsPerHour = 0;
+let powerPerHour = 0;
 const clickPower = 1;
 let totalCookiesEarned = 0;
 let totalClicks = 0;
 let upgradesPurchased = 0;
 let gameStartTime = Date.now();
 
+// Click Speed Tracking
+let clickTimes = [];
+let clickSpeedCPS = 0;
+const CLICK_SPEED_WINDOW = 1000; // 1 Sekunde Zeitfenster
+
+// Epochen-System
+let currentEpoch = 0; // 0=Steinzeit, 1=Antike, 2=Mittelalter, 3=Industrie, 4=Digital, 5=Weltraum
+const EPOCHS = [
+    { id: 0, name: '🪨 Steinzeit', powerCost: 0, unlocked: true },
+    { id: 1, name: '🏛️ Antike', powerCost: 100, unlocked: false },
+    { id: 2, name: '🏰 Mittelalter', powerCost: 500, unlocked: false },
+    { id: 3, name: '🏭 Industriezeitalter', powerCost: 2000, unlocked: false },
+    { id: 4, name: '💻 Digitales Zeitalter', powerCost: 10000, unlocked: false },
+    { id: 5, name: '🚀 Weltraum-Ära', powerCost: 50000, unlocked: false }
+];
+
+// Quest-System
+let dailyQuests = [];
+let questsCompletedToday = 0;
+let lastQuestReset = Date.now();
+
+// Expedition-System
+let lastExpedition = 0;
+let expeditionActive = false;
+const EXPEDITION_COOLDOWN = 8 * 60 * 1000; // 8 Minuten
+
+// Event-System
+let lastRandomEvent = 0;
+const RANDOM_EVENT_COOLDOWN = 15 * 60 * 1000; // 15 Minuten
+let eventActive = false;
+
 // Golden Cookie Variablen
 let goldenCookieActive = false;
 let goldenCookieBonus = 1;
 let goldenCookieBonusEndTime = 0;
 
-// Täglicher Bonus (geändert auf 5 Minuten)
-let lastDailyBonus = 0;
-const DAILY_BONUS_COOLDOWN = 5 * 60 * 1000; // 5 Minuten in Millisekunden
+// Bonus System (3 Minuten)
+let lastBonus = 0;
+const BONUS_COOLDOWN = 3 * 60 * 1000; // 3 Minuten in Millisekunden
 
 // ====================================
 // UPGRADE-DEFINITIONEN
@@ -38,7 +75,10 @@ const upgrades = [
         currentCost: 100,
         cps: 1,
         count: 0,
-        emoji: '👵'
+        emoji: '👵',
+        epoch: 0, // Steinzeit
+        synergyWith: ['farm'], // Bonus mit Farm
+        powerGen: 0.1 // Generiert Macht pro Stunde
     },
     {
         id: 'farm',
@@ -47,7 +87,10 @@ const upgrades = [
         currentCost: 1100,
         cps: 8,
         count: 0,
-        emoji: '🌾'
+        emoji: '🌾',
+        epoch: 0, // Steinzeit
+        synergyWith: ['grandma', 'mine'],
+        powerGen: 0.2
     },
     {
         id: 'mine',
@@ -56,7 +99,10 @@ const upgrades = [
         currentCost: 12000,
         cps: 47,
         count: 0,
-        emoji: '⛏️'
+        emoji: '⛏️',
+        epoch: 1, // Antike
+        synergyWith: ['farm', 'factory'],
+        powerGen: 0.5
     },
     {
         id: 'factory',
@@ -65,7 +111,10 @@ const upgrades = [
         currentCost: 130000,
         cps: 260,
         count: 0,
-        emoji: '🏭'
+        emoji: '🏭',
+        epoch: 3, // Industriezeitalter
+        synergyWith: ['mine', 'bank'],
+        powerGen: 1
     },
     {
         id: 'bank',
@@ -74,7 +123,10 @@ const upgrades = [
         currentCost: 1400000,
         cps: 1400,
         count: 0,
-        emoji: '🏦'
+        emoji: '🏦',
+        epoch: 3, // Industriezeitalter
+        synergyWith: ['factory', 'temple'],
+        powerGen: 2
     },
     {
         id: 'temple',
@@ -83,7 +135,10 @@ const upgrades = [
         currentCost: 20000000,
         cps: 7800,
         count: 0,
-        emoji: '⛩️'
+        emoji: '⛩️',
+        epoch: 2, // Mittelalter
+        synergyWith: ['wizard', 'bank'],
+        powerGen: 5
     },
     {
         id: 'wizard',
@@ -92,19 +147,63 @@ const upgrades = [
         currentCost: 330000000,
         cps: 44000,
         count: 0,
-        emoji: '🧙'
+        emoji: '🧙',
+        epoch: 2, // Mittelalter
+        synergyWith: ['temple', 'portal'],
+        powerGen: 10
+    },
+    {
+        id: 'portal',
+        name: 'Portal',
+        baseCost: 5000000000,
+        currentCost: 5000000000,
+        cps: 260000,
+        count: 0,
+        emoji: '🌀',
+        epoch: 4, // Digital
+        synergyWith: ['wizard', 'timemachine'],
+        powerGen: 20
+    },
+    {
+        id: 'timemachine',
+        name: 'Zeitmaschine',
+        baseCost: 75000000000,
+        currentCost: 75000000000,
+        cps: 1600000,
+        count: 0,
+        emoji: '⏰',
+        epoch: 5, // Weltraum
+        synergyWith: ['portal'],
+        powerGen: 50
     }
 ];
 
 // ====================================
-// PERMANENTE VERBESSERUNGEN
+// PERMANENTE VERBESSERUNGEN (ÜBERARBEITET)
 // ====================================
+// Tier 1: Frühe Upgrades (Moderate Kosten, moderate Effekte)
+// Tier 2: Mittlere Upgrades (Hohe Kosten, starke Effekte)
+// Tier 3: Späte Upgrades (Sehr hohe Kosten, mächtige Effekte)
+// Tier 4: Prestige-Upgrades (Nur mit Prestige-Punkten kaufbar)
+
 const permanentUpgrades = [
+    // === TIER 1: FRÜHE UPGRADES ===
+    {
+        id: 'click_boost_1',
+        name: 'Geschickte Finger',
+        description: 'Klick-Power +50%',
+        baseCost: 1000,
+        tier: 1,
+        purchased: false,
+        emoji: '👆',
+        effect: { type: 'clickPower', multiplier: 1.5 }
+    },
     {
         id: 'cursor_boost_1',
         name: 'Verstärkte Cursor',
-        description: 'Cursor sind 2x effizienter',
-        baseCost: 500,
+        description: 'Cursor +100% effizienter',
+        baseCost: 2500,
+        tier: 1,
         purchased: false,
         emoji: '👆',
         effect: { building: 'cursor', multiplier: 2 }
@@ -112,65 +211,99 @@ const permanentUpgrades = [
     {
         id: 'grandma_boost_1',
         name: 'Omas Geheimrezept',
-        description: 'Omas sind 2x effizienter',
-        baseCost: 5000,
+        description: 'Omas +100% effizienter',
+        baseCost: 15000,
+        tier: 1,
         purchased: false,
         emoji: '👵',
         effect: { building: 'grandma', multiplier: 2 }
     },
+    
+    // === TIER 2: MITTLERE UPGRADES ===
+    {
+        id: 'click_boost_2',
+        name: 'Goldene Finger',
+        description: 'Klick-Power +100%',
+        baseCost: 50000,
+        tier: 2,
+        purchased: false,
+        emoji: '✨',
+        requiresUpgrade: 'click_boost_1',
+        effect: { type: 'clickPower', multiplier: 2 }
+    },
     {
         id: 'farm_boost_1',
         name: 'Bio-Landwirtschaft',
-        description: 'Farmen sind 2x effizienter',
-        baseCost: 50000,
+        description: 'Farmen +100% effizienter',
+        baseCost: 100000,
+        tier: 2,
         purchased: false,
         emoji: '🌾',
         effect: { building: 'farm', multiplier: 2 }
     },
     {
+        id: 'global_boost_1',
+        name: 'Effizienzsteigerung I',
+        description: 'Alle Gebäude +15% CPS',
+        baseCost: 250000,
+        tier: 2,
+        purchased: false,
+        emoji: '⚡',
+        effect: { type: 'global', multiplier: 1.15 }
+    },
+    {
         id: 'mine_boost_1',
         name: 'Diamant-Bohrer',
-        description: 'Minen sind 2x effizienter',
+        description: 'Minen +100% effizienter',
         baseCost: 500000,
+        tier: 2,
         purchased: false,
         emoji: '⛏️',
         effect: { building: 'mine', multiplier: 2 }
     },
-    {
-        id: 'click_boost_1',
-        name: 'Goldene Finger',
-        description: 'Klick-Power verdoppelt',
-        baseCost: 1000,
-        purchased: false,
-        emoji: '✨',
-        effect: { type: 'clickPower', multiplier: 2 }
-    },
-    {
-        id: 'global_boost_1',
-        name: 'Zeitbeschleunigung',
-        description: 'Alle Gebäude +10% CPS',
-        baseCost: 100000,
-        purchased: false,
-        emoji: '⚡',
-        effect: { type: 'global', multiplier: 1.1 }
-    },
+    
+    // === TIER 3: SPÄTE UPGRADES ===
     {
         id: 'factory_boost_1',
-        name: 'Automatisierung',
-        description: 'Fabriken sind 2x effizienter',
-        baseCost: 1000000,
+        name: 'Vollautomatisierung',
+        description: 'Fabriken +150% effizienter',
+        baseCost: 5000000,
+        tier: 3,
         purchased: false,
         emoji: '🏭',
-        effect: { building: 'factory', multiplier: 2 }
+        effect: { building: 'factory', multiplier: 2.5 }
+    },
+    {
+        id: 'global_boost_2',
+        name: 'Effizienzsteigerung II',
+        description: 'Alle Gebäude +25% CPS',
+        baseCost: 10000000,
+        tier: 3,
+        purchased: false,
+        requiresUpgrade: 'global_boost_1',
+        emoji: '⚡',
+        effect: { type: 'global', multiplier: 1.25 }
     },
     {
         id: 'lucky_boost',
         name: 'Glückskeks-Magnet',
-        description: 'Golden Cookies 2x häufiger',
-        baseCost: 250000,
+        description: 'Golden Cookies 50% häufiger',
+        baseCost: 2500000,
+        tier: 3,
         purchased: false,
         emoji: '🧲',
-        effect: { type: 'goldenCookie', multiplier: 0.5 }
+        effect: { type: 'goldenCookie', multiplier: 0.67 }
+    },
+    {
+        id: 'click_boost_3',
+        name: 'Göttliche Berührung',
+        description: 'Klick-Power +200%',
+        baseCost: 25000000,
+        tier: 3,
+        purchased: false,
+        requiresUpgrade: 'click_boost_2',
+        emoji: '�',
+        effect: { type: 'clickPower', multiplier: 3 }
     }
 ];
 
@@ -250,11 +383,14 @@ const cookieCountDisplay = document.getElementById('cookieCount');
 const cpsDisplay = document.getElementById('cpsDisplay');
 const totalEarnedDisplay = document.getElementById('totalEarned');
 const upgradesContainer = document.getElementById('upgradesContainer');
-const permanentUpgradesContainer = document.getElementById('permanentUpgradesContainer');
+const tier1Container = document.getElementById('tier1Container');
+const tier2Container = document.getElementById('tier2Container');
+const tier3Container = document.getElementById('tier3Container');
 const clickAnimationContainer = document.getElementById('clickAnimationContainer');
 const goldenCookieElement = document.getElementById('goldenCookie');
 const dailyBonusBtn = document.getElementById('dailyBonusBtn');
 const bonusTimer = document.getElementById('bonusTimer');
+const rouletteBtn = document.getElementById('rouletteBtn');
 
 // Tab Buttons
 const tabButtons = document.querySelectorAll('.tab-btn');
@@ -305,6 +441,24 @@ bigCookie.addEventListener('click', (event) => {
     cookies += clickValue;
     totalCookiesEarned += clickValue;
     totalClicks++;
+    
+    // Track Click-Speed für Auto-CPS
+    const now = Date.now();
+    clickTimes.push(now);
+    
+    // Entferne alte Clicks außerhalb des Zeitfensters
+    clickTimes = clickTimes.filter(time => now - time < CLICK_SPEED_WINDOW);
+    
+    // Berechne Click-Speed CPS (Clicks pro Sekunde basierend auf letzter Sekunde)
+    clickSpeedCPS = clickTimes.length * clickValue;
+    
+    // Update Quest Progress für Click-Quests
+    if (typeof updateQuestProgress === 'function') {
+        updateQuestProgress('earn_cookies_timed', totalCookiesEarned);
+        // Für Click-Streak Quests
+        const clicksInLastMinute = clickTimes.filter(time => now - time < 60000).length;
+        updateQuestProgress('click_count_timed', clicksInLastMinute);
+    }
     
     // Aktualisiere die Anzeige sofort
     updateDisplay();
@@ -368,17 +522,47 @@ function createUpgradesUI() {
     
     // Erstelle für jedes Upgrade einen Button
     upgrades.forEach(upgrade => {
+        // Prüfe Epochen-Anforderung
+        const epochLocked = upgrade.epoch && upgrade.epoch > currentEpoch;
+        
         const upgradeButton = document.createElement('button');
         upgradeButton.className = 'upgrade-item not-affordable';
         upgradeButton.id = `upgrade-${upgrade.id}`;
         
+        if (epochLocked) {
+            upgradeButton.classList.add('epoch-locked');
+            upgradeButton.disabled = true;
+        }
+        
         // Verknüpfe Button mit buyUpgrade Funktion
         upgradeButton.onclick = () => buyUpgrade(upgrade.id);
+        
+        // Synergie-Indikator
+        let synergyHtml = '';
+        if (upgrade.synergyWith && upgrade.synergyWith.length > 0) {
+            const activeSynergies = upgrade.synergyWith.filter(partnerId => {
+                const partner = upgrades.find(u => u.id === partnerId);
+                return partner && partner.count > 0;
+            });
+            
+            if (activeSynergies.length > 0) {
+                synergyHtml = `<div class="synergy-active">🔗 +${activeSynergies.length * 25}% Synergie</div>`;
+            }
+        }
+        
+        // Epochen-Indikator
+        let epochHtml = '';
+        if (epochLocked) {
+            const requiredEpoch = EPOCHS[upgrade.epoch];
+            epochHtml = `<div class="epoch-requirement">🔒 Benötigt: ${requiredEpoch.name}</div>`;
+        }
         
         // Füge alle Upgrade-Informationen hinzu
         upgradeButton.innerHTML = `
             <div class="upgrade-name">${upgrade.emoji} ${upgrade.name}</div>
             <div class="upgrade-info">+${formatNumber(upgrade.cps)} CPS</div>
+            ${synergyHtml}
+            ${epochHtml}
             <div class="upgrade-count">Besitz: <span id="count-${upgrade.id}">${upgrade.count}</span></div>
             <div class="upgrade-cost">Kosten: <span id="cost-${upgrade.id}">${formatNumber(upgrade.currentCost)}</span> 🍪</div>
         `;
@@ -398,6 +582,15 @@ function buyPermanentUpgrade(id) {
     const upgrade = permanentUpgrades.find(u => u.id === id);
     
     if (!upgrade || upgrade.purchased) return;
+    
+    // Prüfe ob Voraussetzungs-Upgrade gekauft wurde
+    if (upgrade.requiresUpgrade) {
+        const requiredUpgrade = permanentUpgrades.find(u => u.id === upgrade.requiresUpgrade);
+        if (!requiredUpgrade || !requiredUpgrade.purchased) {
+            showNotification(`⚠️ Benötigt: ${requiredUpgrade.name}`);
+            return;
+        }
+    }
     
     if (cookies >= upgrade.baseCost) {
         cookies -= upgrade.baseCost;
@@ -421,10 +614,12 @@ function buyPermanentUpgrade(id) {
 }
 
 /**
- * Erstellt UI für permanente Upgrades
+ * Erstellt UI für permanente Upgrades (nach Tiers sortiert)
  */
 function createPermanentUpgradesUI() {
-    permanentUpgradesContainer.innerHTML = '';
+    tier1Container.innerHTML = '';
+    tier2Container.innerHTML = '';
+    tier3Container.innerHTML = '';
     
     permanentUpgrades.forEach(upgrade => {
         const upgradeDiv = document.createElement('button');
@@ -437,15 +632,34 @@ function createPermanentUpgradesUI() {
             upgradeDiv.disabled = true;
         }
         
+        // Prüfe ob Voraussetzung erfüllt ist
+        let requirementMet = true;
+        let requirementText = '';
+        if (upgrade.requiresUpgrade) {
+            const requiredUpgrade = permanentUpgrades.find(u => u.id === upgrade.requiresUpgrade);
+            requirementMet = requiredUpgrade && requiredUpgrade.purchased;
+            if (!requirementMet) {
+                requirementText = `<div class="upgrade-requirement">🔒 Benötigt: ${requiredUpgrade.name}</div>`;
+            }
+        }
+        
         upgradeDiv.innerHTML = `
             <div class="upgrade-name">${upgrade.emoji} ${upgrade.name}</div>
             <div class="upgrade-info">${upgrade.description}</div>
+            ${requirementText}
             <div class="upgrade-cost">
                 ${upgrade.purchased ? '✅ Gekauft' : `Kosten: ${formatNumber(upgrade.baseCost)} 🍪`}
             </div>
         `;
         
-        permanentUpgradesContainer.appendChild(upgradeDiv);
+        // Füge zum entsprechenden Tier hinzu
+        if (upgrade.tier === 1) {
+            tier1Container.appendChild(upgradeDiv);
+        } else if (upgrade.tier === 2) {
+            tier2Container.appendChild(upgradeDiv);
+        } else if (upgrade.tier === 3) {
+            tier3Container.appendChild(upgradeDiv);
+        }
     });
 }
 
@@ -457,7 +671,14 @@ function updatePermanentUpgradesUI() {
         const button = document.getElementById(`perm-upgrade-${upgrade.id}`);
         
         if (button && !upgrade.purchased) {
-            const canAfford = cookies >= upgrade.baseCost;
+            // Prüfe Voraussetzung
+            let requirementMet = true;
+            if (upgrade.requiresUpgrade) {
+                const requiredUpgrade = permanentUpgrades.find(u => u.id === upgrade.requiresUpgrade);
+                requirementMet = requiredUpgrade && requiredUpgrade.purchased;
+            }
+            
+            const canAfford = cookies >= upgrade.baseCost && requirementMet;
             
             button.disabled = !canAfford;
             
@@ -478,6 +699,7 @@ function updatePermanentUpgradesUI() {
 function getClickPowerMultiplier() {
     let multiplier = 1;
     
+    // Permanente Upgrades
     permanentUpgrades.forEach(upgrade => {
         if (upgrade.purchased && upgrade.effect.type === 'clickPower') {
             multiplier *= upgrade.effect.multiplier;
@@ -539,6 +761,18 @@ function buyUpgrade(id) {
         // Formel: neuerPreis = baseCost * 1.15^count
         upgrade.currentCost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count));
         
+        // Quest-Tracking: Verschiedene Gebäude gekauft
+        if (typeof updateQuestProgress === 'function') {
+            const differentBuildings = upgrades.filter(u => u.count > 0).length;
+            updateQuestProgress('buy_different_buildings', differentBuildings);
+            
+            // Synergie-Tracking
+            if (typeof calculateSynergies === 'function') {
+                const synergies = calculateSynergies();
+                updateQuestProgress('activate_synergies', synergies);
+            }
+        }
+        
         // Aktualisiere die gesamte cookiesPerSecond
         calculateCPS();
         
@@ -553,20 +787,33 @@ function buyUpgrade(id) {
 // ====================================
 /**
  * Berechnet die gesamte Cookies pro Sekunde basierend auf allen Upgrades
- * Berücksichtigt permanente Verbesserungen
+ * Berücksichtigt permanente Verbesserungen, Click-Speed Bonus und Synergien
  */
 function calculateCPS() {
     cookiesPerSecond = 0;
     
-    // Summiere CPS von allen Upgrades mit Multiplikatoren
+    // Summiere CPS von allen Upgrades mit Multiplikatoren UND Synergien
     upgrades.forEach(upgrade => {
         const baseCPS = upgrade.cps * upgrade.count;
-        const multiplier = getBuildingMultiplier(upgrade.id);
-        cookiesPerSecond += baseCPS * multiplier;
+        const buildingMultiplier = getBuildingMultiplier(upgrade.id);
+        const synergyMultiplier = typeof getSynergyMultiplier === 'function' ? getSynergyMultiplier(upgrade.id) : 1;
+        cookiesPerSecond += baseCPS * buildingMultiplier * synergyMultiplier;
     });
+    
+    // Füge Click-Speed CPS hinzu
+    cookiesPerSecond += clickSpeedCPS;
+    
+    // Berechne Macht- und Sterne-Generierung
+    if (typeof calculatePowerGeneration === 'function') calculatePowerGeneration();
+    if (typeof calculateStarGeneration === 'function') calculateStarGeneration();
     
     // Prüfe Achievements
     checkAchievements();
+    
+    // Update Quest Progress
+    if (typeof updateQuestProgress === 'function') {
+        updateQuestProgress('reach_cps', cookiesPerSecond);
+    }
 }
 
 // ====================================
@@ -614,10 +861,11 @@ function updateDisplay() {
     // Zeige Cookie-Anzahl gerundet auf ganze Zahlen
     cookieCountDisplay.textContent = formatNumber(Math.floor(cookies));
     
-    // Zeige gesamt verdiente Cookies
-    if (totalEarnedDisplay) {
-        totalEarnedDisplay.textContent = formatNumber(Math.floor(totalCookiesEarned));
-    }
+    // Zeige Sterne und Macht
+    const starsDisplay = document.getElementById('starsCount');
+    const powerDisplay = document.getElementById('powerCount');
+    if (starsDisplay) starsDisplay.textContent = formatNumber(Math.floor(stars));
+    if (powerDisplay) powerDisplay.textContent = formatNumber(Math.floor(power));
     
     // Zeige CPS mit einer Dezimalstelle (mit Golden Cookie Bonus falls aktiv)
     const displayCPS = cookiesPerSecond * goldenCookieBonus;
@@ -761,47 +1009,378 @@ function updateAchievementsUI() {
 }
 
 // ====================================
-// TÄGLICHER BONUS
+// PRESTIGE SYSTEM
 // ====================================
+// COOKIE ROULETTE 🎰
+// ====================================
+
+// Roulette-Konfiguration
+const ROULETTE_NUMBERS = [
+    0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5,
+    24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26
+];
+
+const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+const BLACK_NUMBERS = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35];
+
+let currentBet = null;
+let rouletteSpinning = false;
+let wheelCanvas, wheelCtx;
+
 /**
- * Initialisiert den täglichen Bonus (5 Minuten)
+ * Zeichnet das Roulette-Rad
  */
-function initDailyBonus() {
-    dailyBonusBtn.addEventListener('click', claimDailyBonus);
-    updateDailyBonusUI();
+function drawRouletteWheel(rotation = 0) {
+    if (!wheelCanvas) return;
     
-    // Prüfe alle 1 Sekunde für genauere Updates
-    setInterval(updateDailyBonusUI, 1000);
+    const centerX = wheelCanvas.width / 2;
+    const centerY = wheelCanvas.height / 2;
+    const radius = 135; // Kleinerer Radius für kompaktes Design
+    const segmentAngle = (2 * Math.PI) / ROULETTE_NUMBERS.length;
+    
+    wheelCtx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+    
+    // Zeichne Segmente
+    ROULETTE_NUMBERS.forEach((number, index) => {
+        const angle = index * segmentAngle + rotation;
+        
+        // Bestimme Farbe
+        let color;
+        if (number === 0) {
+            color = '#10b981'; // Grün
+        } else if (RED_NUMBERS.includes(number)) {
+            color = '#ef4444'; // Rot
+        } else {
+            color = '#1f2937'; // Schwarz
+        }
+        
+        // Zeichne Segment
+        wheelCtx.beginPath();
+        wheelCtx.moveTo(centerX, centerY);
+        wheelCtx.arc(centerX, centerY, radius, angle, angle + segmentAngle);
+        wheelCtx.closePath();
+        wheelCtx.fillStyle = color;
+        wheelCtx.fill();
+        
+        // Zeichne Rand
+        wheelCtx.strokeStyle = '#FFD700';
+        wheelCtx.lineWidth = 2;
+        wheelCtx.stroke();
+        
+        // Zeichne Zahl
+        wheelCtx.save();
+        wheelCtx.translate(centerX, centerY);
+        wheelCtx.rotate(angle + segmentAngle / 2);
+        wheelCtx.textAlign = 'center';
+        wheelCtx.textBaseline = 'middle';
+        wheelCtx.fillStyle = 'white';
+        wheelCtx.font = 'bold 12px Arial'; // Kleinere Schrift für kompakteres Design
+        wheelCtx.fillText(number, radius * 0.75, 0);
+        wheelCtx.restore();
+    });
+    
+    // Zeichne Zentrum
+    wheelCtx.beginPath();
+    wheelCtx.arc(centerX, centerY, 20, 0, 2 * Math.PI); // Kleineres Zentrum
+    wheelCtx.fillStyle = '#FFD700';
+    wheelCtx.fill();
+    wheelCtx.strokeStyle = '#FFA500';
+    wheelCtx.lineWidth = 2;
+    wheelCtx.stroke();
 }
 
 /**
- * Beansprucht den täglichen Bonus (5 Minuten)
+ * Setzt die aktuelle Wette zurück
  */
-function claimDailyBonus() {
-    const now = Date.now();
+function resetBet() {
+    currentBet = null;
+    document.querySelectorAll('.bet-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    document.getElementById('betAmount').value = 100;
+    document.getElementById('rouletteResult').textContent = '';
+    document.getElementById('rouletteResult').className = 'roulette-result';
+    updateSpinButton();
+}
+
+/**
+ * Setzt eine Wette
+ */
+function placeBet(type, value = null) {
+    if (rouletteSpinning) return;
     
-    if (now - lastDailyBonus >= DAILY_BONUS_COOLDOWN) {
-        // Gebe 1 Stunde CPS sofort
-        const bonus = cookiesPerSecond * 3600;
-        cookies += bonus;
-        totalCookiesEarned += bonus;
+    const betAmount = parseInt(document.getElementById('betAmount').value);
+    
+    if (isNaN(betAmount) || betAmount < 10) {
+        showNotification('⚠️ Mindestens 10 Cookies setzen!');
+        return;
+    }
+    
+    if (betAmount > cookies) {
+        showNotification('⚠️ Nicht genug Cookies!');
+        return;
+    }
+    
+    // Spezielle Validierung für Zahlen-Wetten
+    if (type === 'number') {
+        const selectedNumber = document.getElementById('singleNumberSelect').value;
+        if (selectedNumber === '') {
+            showNotification('⚠️ Bitte wähle eine Zahl!');
+            return;
+        }
+        value = parseInt(selectedNumber);
+    }
+    
+    currentBet = { type, value, amount: betAmount };
+    
+    // Markiere ausgewählte Wette
+    document.querySelectorAll('.bet-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    event.target.classList.add('selected');
+    
+    updateSpinButton();
+}
+
+/**
+ * Aktualisiert den Spin-Button
+ */
+function updateSpinButton() {
+    const spinBtn = document.getElementById('spinButton');
+    spinBtn.disabled = !currentBet || rouletteSpinning;
+}
+
+/**
+ * Dreht das Roulette-Rad
+ */
+function spinWheel() {
+    if (!currentBet || rouletteSpinning) return;
+    
+    rouletteSpinning = true;
+    updateSpinButton();
+    
+    // Ziehe Einsatz ab
+    cookies -= currentBet.amount;
+    updateDisplay();
+    
+    // Wähle zufällige Gewinnzahl
+    const winningNumber = ROULETTE_NUMBERS[Math.floor(Math.random() * ROULETTE_NUMBERS.length)];
+    
+    // Berechne Ziel-Rotation (mehrere Umdrehungen + Zielposition)
+    const winningIndex = ROULETTE_NUMBERS.indexOf(winningNumber);
+    const segmentAngle = (2 * Math.PI) / ROULETTE_NUMBERS.length;
+    const targetRotation = (Math.PI * 2 * 5) + (winningIndex * segmentAngle); // 5 Umdrehungen
+    
+    // Animation
+    const duration = 3000; // 3 Sekunden
+    const startTime = Date.now();
+    const startRotation = 0;
+    
+    function animate() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
         
-        lastDailyBonus = now;
+        // Easing function (ease-out)
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const currentRotation = startRotation + (targetRotation * eased);
         
-        updateDisplay();
-        updateDailyBonusUI();
+        drawRouletteWheel(currentRotation);
         
-        showNotification(`🎁 5-Minuten Bonus! +${formatNumber(bonus)} Cookies!`);
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            // Animation beendet - zeige Ergebnis
+            setTimeout(() => {
+                showRouletteResult(winningNumber);
+            }, 500);
+        }
+    }
+    
+    animate();
+}
+
+/**
+ * Zeigt das Roulette-Ergebnis
+ */
+function showRouletteResult(winningNumber) {
+    const resultDiv = document.getElementById('rouletteResult');
+    
+    // Bestimme Gewinnfarbe
+    let numberColor = 'Grün';
+    if (RED_NUMBERS.includes(winningNumber)) {
+        numberColor = 'Rot';
+    } else if (BLACK_NUMBERS.includes(winningNumber)) {
+        numberColor = 'Schwarz';
+    }
+    
+    // Prüfe ob gewonnen
+    const won = checkWin(winningNumber);
+    
+    if (won) {
+        const multiplier = getMultiplier(currentBet.type);
+        const winnings = Math.floor(currentBet.amount * multiplier);
+        cookies += winnings;
+        totalCookiesEarned += (winnings - currentBet.amount);
+        
+        resultDiv.textContent = `🎉 GEWONNEN! Zahl: ${winningNumber} (${numberColor}) | +${formatNumber(winnings)} Cookies!`;
+        resultDiv.className = 'roulette-result win';
+    } else {
+        resultDiv.textContent = `❌ Verloren! Zahl: ${winningNumber} (${numberColor}) | -${formatNumber(currentBet.amount)} Cookies`;
+        resultDiv.className = 'roulette-result lose';
+    }
+    
+    updateDisplay();
+    rouletteSpinning = false;
+    
+    // Reset nach 5 Sekunden
+    setTimeout(() => {
+        resetBet();
+    }, 5000);
+}
+
+/**
+ * Prüft ob die Wette gewonnen hat
+ */
+function checkWin(winningNumber) {
+    if (!currentBet) return false;
+    
+    switch(currentBet.type) {
+        case 'red':
+            return RED_NUMBERS.includes(winningNumber);
+        case 'black':
+            return BLACK_NUMBERS.includes(winningNumber);
+        case 'even':
+            return winningNumber !== 0 && winningNumber % 2 === 0;
+        case 'odd':
+            return winningNumber !== 0 && winningNumber % 2 === 1;
+        case 'low':
+            return winningNumber >= 1 && winningNumber <= 18;
+        case 'high':
+            return winningNumber >= 19 && winningNumber <= 36;
+        case 'dozen1':
+            return winningNumber >= 1 && winningNumber <= 12;
+        case 'dozen2':
+            return winningNumber >= 13 && winningNumber <= 24;
+        case 'dozen3':
+            return winningNumber >= 25 && winningNumber <= 36;
+        case 'number':
+            return winningNumber === currentBet.value;
+        default:
+            return false;
     }
 }
 
 /**
- * Aktualisiert Daily Bonus UI
+ * Gibt den Gewinn-Multiplikator für die Wettart zurück
  */
-function updateDailyBonusUI() {
+function getMultiplier(betType) {
+    switch(betType) {
+        case 'red':
+        case 'black':
+        case 'even':
+        case 'odd':
+        case 'low':
+        case 'high':
+            return 2; // 2x
+        case 'dozen1':
+        case 'dozen2':
+        case 'dozen3':
+            return 3; // 3x
+        case 'number':
+            return 36; // 36x
+        default:
+            return 1;
+    }
+}
+
+/**
+ * Initialisiert Cookie Roulette
+ */
+function initRoulette() {
+    wheelCanvas = document.getElementById('wheelCanvas');
+    wheelCtx = wheelCanvas?.getContext('2d');
+    
+    const spinBtn = document.getElementById('spinButton');
+    
+    if (spinBtn) {
+        spinBtn.addEventListener('click', spinWheel);
+    }
+    
+    // Quick Bet Buttons
+    document.querySelectorAll('.quick-bet-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const amount = btn.dataset.amount;
+            const betInput = document.getElementById('betAmount');
+            
+            if (amount === 'all') {
+                betInput.value = Math.floor(cookies);
+            } else {
+                betInput.value = Math.min(parseInt(amount), Math.floor(cookies));
+            }
+        });
+    });
+    
+    // Bet Buttons
+    document.querySelectorAll('.bet-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const type = btn.dataset.type;
+            placeBet(type);
+        });
+    });
+    
+    // Zeichne Rad initial
+    drawRouletteWheel();
+}
+
+// ====================================
+// 5-MINUTEN BONUS
+// ====================================
+// ====================================
+// 5-MINUTEN BONUS
+// ====================================
+/**
+ * Initialisiert den 5-Minuten Bonus
+ */
+function initDailyBonus() {
+    dailyBonusBtn.addEventListener('click', claimBonus);
+    updateBonusUI();
+    
+    // Prüfe alle 1 Sekunde für genauere Updates
+    setInterval(updateBonusUI, 1000);
+}
+
+/**
+ * Beansprucht den 5-Minuten Bonus (ÜBERARBEITET - Moderater)
+ */
+function claimBonus() {
     const now = Date.now();
-    const timeSinceLastBonus = now - lastDailyBonus;
-    const timeRemaining = DAILY_BONUS_COOLDOWN - timeSinceLastBonus;
+    
+    if (now - lastBonus >= BONUS_COOLDOWN) {
+        // NEUER BONUS: +50% Klick-Power für 60 Sekunden + moderate Cookie-Menge
+        const cookieBonus = Math.max(100, cookiesPerSecond * 30); // 30 Sekunden Produktion oder min. 100
+        cookies += cookieBonus;
+        totalCookiesEarned += cookieBonus;
+        
+        // Temporärer Klick-Boost (wird in der Update-Schleife geprüft)
+        goldenCookieBonus = 1.5;
+        goldenCookieBonusEndTime = now + 60000; // 60 Sekunden
+        
+        lastBonus = now;
+        
+        updateDisplay();
+        updateBonusUI();
+        
+        showNotification(`🎁 5-Min Bonus!\n+${formatNumber(cookieBonus)} Cookies\n+50% Klick-Power für 60s!`);
+    }
+}
+
+/**
+ * Aktualisiert Bonus UI
+ */
+function updateBonusUI() {
+    const now = Date.now();
+    const timeSinceLastBonus = now - lastBonus;
+    const timeRemaining = BONUS_COOLDOWN - timeSinceLastBonus;
     
     if (timeRemaining <= 0) {
         dailyBonusBtn.disabled = false;
@@ -957,6 +1536,7 @@ function scheduleNextGoldenCookie() {
  * - Aktualisiert alle Anzeigen
  * - Prüft Golden Cookie Bonus Timer
  * - Aktualisiert Kaufbarkeit der Upgrades
+ * - Trackt Lifetime Cookies für Prestige
  */
 function updateGame() {
     // Berechne Cookie-Gewinn für dieses Update (CPS / 30 für 33ms Updates)
@@ -965,9 +1545,41 @@ function updateGame() {
     cookies += cpsGain;
     totalCookiesEarned += cpsGain;
     
-    // Prüfe ob Golden Cookie Bonus abgelaufen ist
+    // Macht und Sterne pro Stunde generieren (passiv)
+    const powerGain = (powerPerHour / 30 / 3600); // Pro Update
+    const starGain = (starsPerHour / 30 / 3600);
+    power += powerGain;
+    stars += starGain;
+    
+    // Prüfe ob Golden Cookie/Bonus-Buff abgelaufen ist
     if (goldenCookieBonus > 1 && Date.now() >= goldenCookieBonusEndTime) {
         goldenCookieBonus = 1;
+    }
+    
+    // Check für Quest-Timer
+    if (typeof updateQuestProgress === 'function') {
+        // Update timed quests
+        dailyQuests.forEach(quest => {
+            if (quest.timeLimit && !quest.completed && !quest.failed) {
+                if (Date.now() - quest.startTime > quest.timeLimit) {
+                    quest.failed = true;
+                }
+            }
+        });
+    }
+    
+    // Check für Expeditionen
+    if (typeof startExpedition === 'function' && !expeditionActive) {
+        if (Date.now() - lastExpedition >= EXPEDITION_COOLDOWN) {
+            startExpedition();
+        }
+    }
+    
+    // Check für Random Events
+    if (typeof triggerRandomEvent === 'function' && !eventActive) {
+        if (Date.now() - lastRandomEvent >= RANDOM_EVENT_COOLDOWN) {
+            triggerRandomEvent();
+        }
     }
     
     // Aktualisiere alle Anzeigen
@@ -991,11 +1603,18 @@ function initGame() {
     createPermanentUpgradesUI();
     createAchievementsUI();
     
+    // Initialisiere neue Features
+    initRoulette();
+    initDailyBonus();
+    
+    // Initialisiere neue Systeme
+    if (typeof generateDailyQuests === 'function') generateDailyQuests();
+    if (typeof updateEpochsUI === 'function') updateEpochsUI();
+    if (typeof updateQuestsUI === 'function') updateQuestsUI();
+    
     // Initiale Anzeigen aktualisieren
     updateDisplay();
-    
-    // Initialisiere Daily Bonus
-    initDailyBonus();
+    calculateCPS();
     
     // Starte Haupt-Game-Loop mit 33ms Intervall (30 FPS für flüssigen Zähler)
     // Dies sorgt für einen sehr flüssigen Cookie-Zähler
@@ -1006,6 +1625,18 @@ function initGame() {
         spawnGoldenCookie();
         scheduleNextGoldenCookie();
     }, 30000);
+    
+    // Quest-Reset Check (täglich um Mitternacht)
+    setInterval(() => {
+        const now = Date.now();
+        const daysSinceReset = (now - lastQuestReset) / (24 * 60 * 60 * 1000);
+        if (daysSinceReset >= 1) {
+            lastQuestReset = now;
+            questsCompletedToday = 0;
+            if (typeof generateDailyQuests === 'function') generateDailyQuests();
+            showNotification('📜 Neue tägliche Quests verfügbar!');
+        }
+    }, 60000); // Check jede Minute
 }
 
 // Spiel starten
@@ -1026,7 +1657,7 @@ setInterval(() => {
         totalClicks,
         upgradesPurchased,
         gameStartTime,
-        lastDailyBonus,
+        lastBonus,
         upgrades: upgrades.map(u => ({
             id: u.id,
             count: u.count,
@@ -1058,7 +1689,7 @@ window.addEventListener('load', () => {
             totalClicks = data.totalClicks || 0;
             upgradesPurchased = data.upgradesPurchased || 0;
             gameStartTime = data.gameStartTime || Date.now();
-            lastDailyBonus = data.lastDailyBonus || 0;
+            lastBonus = data.lastBonus || data.lastDailyBonus || 0; // Backwards compatibility
             
             if (data.upgrades) {
                 data.upgrades.forEach(savedUpgrade => {
@@ -1092,8 +1723,10 @@ window.addEventListener('load', () => {
             updateDisplay();
             updateUpgradesUI();
             updatePermanentUpgradesUI();
+            updatePrestigeUI();
+            updatePrestigeUpgradesUI();
             updateAchievementsUI();
-            updateDailyBonusUI();
+            updateBonusUI();
         } catch (e) {
             console.error('Fehler beim Laden des Spielstands:', e);
         }
