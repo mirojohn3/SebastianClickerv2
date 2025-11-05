@@ -438,16 +438,19 @@ bigCookie.addEventListener('click', (event) => {
     const clickMultiplier = getClickPowerMultiplier();
     const clickValue = clickPower * clickMultiplier * goldenCookieBonus;
     
-    cookies += clickValue;
-    totalCookiesEarned += clickValue;
+    // Wichtig: Stelle sicher dass Cookies als Zahl behandelt werden
+    cookies = Number(cookies) + Number(clickValue);
+    totalCookiesEarned = Number(totalCookiesEarned) + Number(clickValue);
     totalClicks++;
     
     // Track Click-Speed für Auto-CPS
     const now = Date.now();
     clickTimes.push(now);
     
-    // Entferne alte Clicks außerhalb des Zeitfensters
-    clickTimes = clickTimes.filter(time => now - time < CLICK_SPEED_WINDOW);
+    // Entferne alte Clicks außerhalb des Zeitfensters (nutze filter ohne Reassignment)
+    const recentClicks = clickTimes.filter(time => now - time < CLICK_SPEED_WINDOW);
+    clickTimes.length = 0;
+    clickTimes.push(...recentClicks);
     
     // Berechne Click-Speed CPS (Clicks pro Sekunde basierend auf letzter Sekunde)
     clickSpeedCPS = clickTimes.length * clickValue;
@@ -836,11 +839,20 @@ function updateUpgradesUI() {
             countSpan.textContent = upgrade.count;
             costSpan.textContent = formatNumber(upgrade.currentCost);
             
-            // Prüfe Kaufbarkeit
-            const canAfford = cookies >= upgrade.currentCost;
+            // Prüfe Epochen-Anforderung
+            const epochLocked = upgrade.epoch && upgrade.epoch > currentEpoch;
             
-            // Button aktivieren/deaktivieren
-            button.disabled = !canAfford;
+            // Prüfe Kaufbarkeit
+            const canAfford = cookies >= upgrade.currentCost && !epochLocked;
+            
+            // Button aktivieren/deaktivieren nur wenn epochLocked
+            if (epochLocked) {
+                button.disabled = true;
+                button.classList.add('epoch-locked');
+            } else {
+                button.disabled = false;
+                button.classList.remove('epoch-locked');
+            }
             
             // Visuelle Klassen für Kaufbarkeit
             if (canAfford) {
@@ -1169,7 +1181,12 @@ function spinWheel() {
     // Berechne Ziel-Rotation (mehrere Umdrehungen + Zielposition)
     const winningIndex = ROULETTE_NUMBERS.indexOf(winningNumber);
     const segmentAngle = (2 * Math.PI) / ROULETTE_NUMBERS.length;
-    const targetRotation = (Math.PI * 2 * 5) + (winningIndex * segmentAngle); // 5 Umdrehungen
+    
+    // WICHTIG: Der Zeiger ist oben (bei 0°), daher müssen wir NEGATIV rotieren
+    // und die Position so anpassen, dass das Segment unter dem Zeiger landet
+    // Offset um 90° (π/2) damit die Zahl wirklich unter dem Zeiger ist
+    const targetAngle = -(winningIndex * segmentAngle) - (segmentAngle / 2);
+    const targetRotation = (Math.PI * 2 * 5) + targetAngle; // 5 volle Umdrehungen plus Zielwinkel
     
     // Animation
     const duration = 3000; // 3 Sekunden
@@ -1541,15 +1558,17 @@ function scheduleNextGoldenCookie() {
 function updateGame() {
     // Berechne Cookie-Gewinn für dieses Update (CPS / 30 für 33ms Updates)
     // 30 Updates pro Sekunde = cookiesPerSecond / 30
-    const cpsGain = (cookiesPerSecond * goldenCookieBonus) / 30;
-    cookies += cpsGain;
-    totalCookiesEarned += cpsGain;
+    const cpsGain = (Number(cookiesPerSecond) * Number(goldenCookieBonus)) / 30;
+    
+    // Wichtig: Stelle sicher dass Cookies als Zahl behandelt werden
+    cookies = Number(cookies) + Number(cpsGain);
+    totalCookiesEarned = Number(totalCookiesEarned) + Number(cpsGain);
     
     // Macht und Sterne pro Stunde generieren (passiv)
-    const powerGain = (powerPerHour / 30 / 3600); // Pro Update
-    const starGain = (starsPerHour / 30 / 3600);
-    power += powerGain;
-    stars += starGain;
+    const powerGain = (Number(powerPerHour) / 30 / 3600); // Pro Update
+    const starGain = (Number(starsPerHour) / 30 / 3600);
+    power = Number(power) + Number(powerGain);
+    stars = Number(stars) + Number(starGain);
     
     // Prüfe ob Golden Cookie/Bonus-Buff abgelaufen ist
     if (goldenCookieBonus > 1 && Date.now() >= goldenCookieBonusEndTime) {
