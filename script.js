@@ -66,7 +66,10 @@ const upgrades = [
         currentCost: 15,
         cps: 0.1,
         count: 0,
-        emoji: '👆'
+        emoji: '👆',
+        epoch: 0,
+        synergyWith: [],
+        powerGen: 0
     },
     {
         id: 'grandma',
@@ -537,9 +540,6 @@ function createUpgradesUI() {
             upgradeButton.disabled = true;
         }
         
-        // Verknüpfe Button mit buyUpgrade Funktion
-        upgradeButton.onclick = () => buyUpgrade(upgrade.id);
-        
         // Synergie-Indikator
         let synergyHtml = '';
         if (upgrade.synergyWith && upgrade.synergyWith.length > 0) {
@@ -569,6 +569,9 @@ function createUpgradesUI() {
             <div class="upgrade-count">Besitz: <span id="count-${upgrade.id}">${upgrade.count}</span></div>
             <div class="upgrade-cost">Kosten: <span id="cost-${upgrade.id}">${formatNumber(upgrade.currentCost)}</span> 🍪</div>
         `;
+        
+        // WICHTIG: Event Listener NACH innerHTML setzen
+        upgradeButton.addEventListener('click', () => buyUpgrade(upgrade.id));
         
         // Füge Button zum Container hinzu
         upgradesContainer.appendChild(upgradeButton);
@@ -628,7 +631,6 @@ function createPermanentUpgradesUI() {
         const upgradeDiv = document.createElement('button');
         upgradeDiv.className = 'upgrade-item not-affordable';
         upgradeDiv.id = `perm-upgrade-${upgrade.id}`;
-        upgradeDiv.onclick = () => buyPermanentUpgrade(upgrade.id);
         
         if (upgrade.purchased) {
             upgradeDiv.classList.add('purchased');
@@ -654,6 +656,9 @@ function createPermanentUpgradesUI() {
                 ${upgrade.purchased ? '✅ Gekauft' : `Kosten: ${formatNumber(upgrade.baseCost)} 🍪`}
             </div>
         `;
+        
+        // WICHTIG: Event Listener NACH innerHTML setzen
+        upgradeDiv.addEventListener('click', () => buyPermanentUpgrade(upgrade.id));
         
         // Füge zum entsprechenden Tier hinzu
         if (upgrade.tier === 1) {
@@ -1118,7 +1123,7 @@ function resetBet() {
 /**
  * Setzt eine Wette
  */
-function placeBet(type, value = null) {
+function placeBet(type, value = null, targetElement = null) {
     if (rouletteSpinning) return;
     
     const betAmount = parseInt(document.getElementById('betAmount').value);
@@ -1149,7 +1154,9 @@ function placeBet(type, value = null) {
     document.querySelectorAll('.bet-btn').forEach(btn => {
         btn.classList.remove('selected');
     });
-    event.target.classList.add('selected');
+    if (targetElement) {
+        targetElement.classList.add('selected');
+    }
     
     updateSpinButton();
 }
@@ -1341,7 +1348,7 @@ function initRoulette() {
     document.querySelectorAll('.bet-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const type = btn.dataset.type;
-            placeBet(type);
+            placeBet(type, null, e.target);
         });
     });
     
@@ -1350,13 +1357,10 @@ function initRoulette() {
 }
 
 // ====================================
-// 5-MINUTEN BONUS
-// ====================================
-// ====================================
-// 5-MINUTEN BONUS
+// 3-MINUTEN BONUS
 // ====================================
 /**
- * Initialisiert den 5-Minuten Bonus
+ * Initialisiert den 3-Minuten Bonus
  */
 function initDailyBonus() {
     dailyBonusBtn.addEventListener('click', claimBonus);
@@ -1367,16 +1371,16 @@ function initDailyBonus() {
 }
 
 /**
- * Beansprucht den 5-Minuten Bonus (ÜBERARBEITET - Moderater)
+ * Beansprucht den 3-Minuten Bonus
  */
 function claimBonus() {
     const now = Date.now();
     
     if (now - lastBonus >= BONUS_COOLDOWN) {
-        // NEUER BONUS: +50% Klick-Power für 60 Sekunden + moderate Cookie-Menge
+        // BONUS: +50% Klick-Power für 60 Sekunden + moderate Cookie-Menge
         const cookieBonus = Math.max(100, cookiesPerSecond * 30); // 30 Sekunden Produktion oder min. 100
-        cookies += cookieBonus;
-        totalCookiesEarned += cookieBonus;
+        cookies = Number(cookies) + Number(cookieBonus);
+        totalCookiesEarned = Number(totalCookiesEarned) + Number(cookieBonus);
         
         // Temporärer Klick-Boost (wird in der Update-Schleife geprüft)
         goldenCookieBonus = 1.5;
@@ -1387,7 +1391,7 @@ function claimBonus() {
         updateDisplay();
         updateBonusUI();
         
-        showNotification(`🎁 5-Min Bonus!\n+${formatNumber(cookieBonus)} Cookies\n+50% Klick-Power für 60s!`);
+        showNotification(`🎁 3-Min Bonus!\n+${formatNumber(cookieBonus)} Cookies\n+50% Klick-Power für 60s!`);
     }
 }
 

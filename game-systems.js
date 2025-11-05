@@ -4,6 +4,67 @@
 // ====================================
 
 // ====================================
+// QUEST-SYSTEM DEFINITIONEN
+// ====================================
+
+const QUEST_TEMPLATES = [
+    {
+        id: 'earn_cookies',
+        name: 'Cookie-Sammler',
+        description: 'Verdiene {amount} Cookies',
+        type: 'earn_cookies_timed',
+        targetAmount: [1000, 10000, 100000],
+        reward: { cookies: 5000, stars: 5 },
+        emoji: '🍪'
+    },
+    {
+        id: 'click_cookies',
+        name: 'Klick-Meister',
+        description: 'Klicke {amount} mal',
+        type: 'click_count_timed',
+        targetAmount: [50, 100, 200],
+        reward: { cookies: 2000, stars: 3 },
+        emoji: '👆'
+    },
+    {
+        id: 'buy_buildings',
+        name: 'Bauherr',
+        description: 'Kaufe {amount} verschiedene Gebäudetypen',
+        type: 'buy_different_buildings',
+        targetAmount: [3, 5, 8],
+        reward: { stars: 10, power: 20 },
+        emoji: '🏗️'
+    },
+    {
+        id: 'reach_cps',
+        name: 'Produktionsmeister',
+        description: 'Erreiche {amount} CPS',
+        type: 'reach_cps',
+        targetAmount: [100, 1000, 10000],
+        reward: { stars: 8, power: 30 },
+        emoji: '⚡'
+    },
+    {
+        id: 'activate_synergies',
+        name: 'Synergie-Experte',
+        description: 'Aktiviere {amount} Synergien',
+        type: 'activate_synergies',
+        targetAmount: [2, 5, 10],
+        reward: { stars: 15, power: 50 },
+        emoji: '🔗'
+    },
+    {
+        id: 'complete_expedition',
+        name: 'Abenteurer',
+        description: 'Schließe {amount} Expedition ab',
+        type: 'complete_expedition',
+        targetAmount: [1, 1, 1],
+        reward: { cookies: 50000, stars: 20 },
+        emoji: '🗺️'
+    }
+];
+
+// ====================================
 // QUEST-SYSTEM FUNKTIONEN
 // ====================================
 
@@ -70,17 +131,17 @@ function completeQuest(quest) {
     quest.completed = true;
     questsCompletedToday++;
     
-    // Belohnungen vergeben
+    // Belohnungen vergeben (mit sicherer Number-Konvertierung)
     if (quest.reward.cookies) {
-        cookies += quest.reward.cookies;
+        cookies = Number(cookies) + Number(quest.reward.cookies);
         showNotification(`🎉 Quest abgeschlossen! +${formatNumber(quest.reward.cookies)} Cookies!`);
     }
     if (quest.reward.stars) {
-        stars += quest.reward.stars;
+        stars = Number(stars) + Number(quest.reward.stars);
         showNotification(`⭐ +${quest.reward.stars} Sterne verdient!`);
     }
     if (quest.reward.power) {
-        power += quest.reward.power;
+        power = Number(power) + Number(quest.reward.power);
         showNotification(`🔮 +${quest.reward.power} Macht erhalten!`);
     }
     if (quest.reward.powerMultiplier) {
@@ -203,7 +264,7 @@ function advanceEpoch(epochIndex) {
         return;
     }
     
-    power -= epoch.powerCost;
+    power = Number(power) - Number(epoch.powerCost);
     currentEpoch = epochIndex;
     epoch.unlocked = true;
     
@@ -361,15 +422,15 @@ function completeExpedition(expedition, multiplier = 1) {
     const rewards = expedition.rewards;
     
     if (rewards.cookies) {
-        cookies += rewards.cookies * multiplier;
+        cookies = Number(cookies) + Number(rewards.cookies * multiplier);
         showNotification(`🍪 +${formatNumber(rewards.cookies * multiplier)} Cookies!`);
     }
     if (rewards.stars) {
-        stars += Math.floor(rewards.stars * multiplier);
+        stars = Number(stars) + Math.floor(rewards.stars * multiplier);
         showNotification(`⭐ +${Math.floor(rewards.stars * multiplier)} Sterne!`);
     }
     if (rewards.power) {
-        power += Math.floor(rewards.power * multiplier);
+        power = Number(power) + Math.floor(rewards.power * multiplier);
         showNotification(`🔮 +${Math.floor(rewards.power * multiplier)} Macht!`);
     }
     
@@ -455,7 +516,7 @@ function startCookieTornado(event) {
         if (caught >= 20) {
             clearInterval(interval);
             const reward = caught * 1000;
-            cookies += reward;
+            cookies = Number(cookies) + Number(reward);
             showNotification(`🌪️ ${caught} Cookies gefangen! +${formatNumber(reward)} Belohnung!`);
             modal.classList.add('hidden');
             eventActive = false;
@@ -471,7 +532,7 @@ function kingVisit(event) {
     const multiplier = Math.max(1, Math.floor(cookiesPerSecond / 1000));
     const reward = cookiesPerSecond * 60 * multiplier;
     
-    cookies += reward;
+    cookies = Number(cookies) + Number(reward);
     showNotification(`👑 Der König ist beeindruckt! +${formatNumber(reward)} Cookies!`);
     
     eventActive = false;
@@ -490,13 +551,13 @@ function luckyWheel(event) {
     const reward = rewards[Math.floor(Math.random() * rewards.length)];
     
     if (reward.type === 'cookies') {
-        cookies += reward.amount;
+        cookies = Number(cookies) + Number(reward.amount);
         showNotification(`${reward.emoji} Glücksrad: +${formatNumber(reward.amount)} Cookies!`);
     } else if (reward.type === 'stars') {
-        stars += reward.amount;
+        stars = Number(stars) + Number(reward.amount);
         showNotification(`${reward.emoji} Glücksrad: +${reward.amount} Sterne!`);
     } else if (reward.type === 'power') {
-        power += reward.amount;
+        power = Number(power) + Number(reward.amount);
         showNotification(`${reward.emoji} Glücksrad: +${reward.amount} Macht!`);
     } else if (reward.type === 'multiplier') {
         goldenCookieBonus = reward.amount;
@@ -520,6 +581,113 @@ function timeRift(event) {
     }, event.duration);
 }
 
+/**
+ * Spawnt einen fliegenden Cookie für das Tornado-Event
+ */
+function spawnFlyingCookie() {
+    const tornadoArea = document.getElementById('tornadoArea');
+    if (!tornadoArea) return;
+    
+    const cookieEl = document.createElement('div');
+    cookieEl.className = 'flying-cookie';
+    cookieEl.textContent = '🍪';
+    cookieEl.style.left = Math.random() * 80 + '%';
+    cookieEl.style.top = Math.random() * 80 + '%';
+    
+    cookieEl.addEventListener('click', function() {
+        const scoreEl = document.getElementById('tornadoScore');
+        if (scoreEl) {
+            const currentScore = parseInt(scoreEl.textContent) || 0;
+            scoreEl.textContent = currentScore + 1;
+        }
+        this.remove();
+    });
+    
+    tornadoArea.appendChild(cookieEl);
+    
+    setTimeout(() => cookieEl.remove(), 3000);
+}
+
+/**
+ * Memory Card Flip Funktion
+ */
+let memoryFirstCard = null;
+let memorySecondCard = null;
+let memoryMatches = 0;
+
+function flipMemoryCard(cardElement, expeditionStr) {
+    if (cardElement.classList.contains('flipped') || cardElement.classList.contains('matched')) return;
+    
+    const symbol = cardElement.dataset.symbol;
+    cardElement.textContent = symbol;
+    cardElement.classList.add('flipped');
+    
+    if (!memoryFirstCard) {
+        memoryFirstCard = cardElement;
+    } else if (!memorySecondCard) {
+        memorySecondCard = cardElement;
+        
+        if (memoryFirstCard.dataset.symbol === memorySecondCard.dataset.symbol) {
+            memoryFirstCard.classList.add('matched');
+            memorySecondCard.classList.add('matched');
+            memoryMatches++;
+            memoryFirstCard = null;
+            memorySecondCard = null;
+            
+            if (memoryMatches === 6) {
+                const expedition = JSON.parse(expeditionStr);
+                setTimeout(() => completeExpedition(expedition, 2), 500);
+            }
+        } else {
+            setTimeout(() => {
+                memoryFirstCard.textContent = '?';
+                memorySecondCard.textContent = '?';
+                memoryFirstCard.classList.remove('flipped');
+                memorySecondCard.classList.remove('flipped');
+                memoryFirstCard = null;
+                memorySecondCard = null;
+            }, 800);
+        }
+    }
+}
+
+/**
+ * Click Duel Funktionen
+ */
+let clickDuelCount = 0;
+let clickDuelActive = false;
+
+function clickDuelClick() {
+    if (!clickDuelActive) return;
+    clickDuelCount++;
+    document.getElementById('clickDuelCount').textContent = clickDuelCount;
+}
+
+function startClickDuel(expeditionStr) {
+    const expedition = JSON.parse(expeditionStr);
+    clickDuelCount = 0;
+    clickDuelActive = true;
+    
+    let timeLeft = 10;
+    const timerEl = document.getElementById('clickDuelTimer');
+    const btnEl = document.getElementById('clickDuelBtn');
+    btnEl.disabled = false;
+    
+    const countdown = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            clickDuelActive = false;
+            btnEl.disabled = true;
+            
+            const multiplier = clickDuelCount >= 100 ? 3 : clickDuelCount >= 50 ? 2 : 1;
+            setTimeout(() => completeExpedition(expedition, multiplier), 500);
+        }
+    }, 1000);
+}
+
 // ====================================
 // GEBÄUDE-SYNERGIEN
 // ====================================
@@ -531,7 +699,7 @@ function calculateSynergies() {
     let activeSynergies = 0;
     
     upgrades.forEach(building => {
-        if (building.count === 0) return;
+        if (building.count === 0 || !building.synergyWith) return;
         
         building.synergyWith.forEach(partnerId => {
             const partner = upgrades.find(u => u.id === partnerId);
@@ -549,7 +717,7 @@ function calculateSynergies() {
  */
 function getSynergyMultiplier(buildingId) {
     const building = upgrades.find(u => u.id === buildingId);
-    if (!building || building.count === 0) return 1;
+    if (!building || building.count === 0 || !building.synergyWith) return 1;
     
     let multiplier = 1;
     
