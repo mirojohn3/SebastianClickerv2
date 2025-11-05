@@ -1052,14 +1052,16 @@ function drawRouletteWheel(rotation = 0) {
     
     const centerX = wheelCanvas.width / 2;
     const centerY = wheelCanvas.height / 2;
-    const radius = 135; // Kleinerer Radius für kompaktes Design
+    const radius = 135;
     const segmentAngle = (2 * Math.PI) / ROULETTE_NUMBERS.length;
     
     wheelCtx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
     
     // Zeichne Segmente
     ROULETTE_NUMBERS.forEach((number, index) => {
-        const angle = index * segmentAngle + rotation;
+        // Starte bei -90° (oben), damit Index 0 oben ist
+        // Segmente werden ZENTRIERT auf ihrer Position gezeichnet
+        const angle = (-Math.PI / 2) + (index * segmentAngle) + rotation;
         
         // Bestimme Farbe
         let color;
@@ -1071,10 +1073,12 @@ function drawRouletteWheel(rotation = 0) {
             color = '#1f2937'; // Schwarz
         }
         
-        // Zeichne Segment
+        // Zeichne Segment (zentriert um angle)
         wheelCtx.beginPath();
         wheelCtx.moveTo(centerX, centerY);
-        wheelCtx.arc(centerX, centerY, radius, angle, angle + segmentAngle);
+        wheelCtx.arc(centerX, centerY, radius, 
+                     angle - segmentAngle / 2, 
+                     angle + segmentAngle / 2);
         wheelCtx.closePath();
         wheelCtx.fillStyle = color;
         wheelCtx.fill();
@@ -1084,14 +1088,14 @@ function drawRouletteWheel(rotation = 0) {
         wheelCtx.lineWidth = 2;
         wheelCtx.stroke();
         
-        // Zeichne Zahl
+        // Zeichne Zahl (in der Mitte des Segments)
         wheelCtx.save();
         wheelCtx.translate(centerX, centerY);
-        wheelCtx.rotate(angle + segmentAngle / 2);
+        wheelCtx.rotate(angle);
         wheelCtx.textAlign = 'center';
         wheelCtx.textBaseline = 'middle';
         wheelCtx.fillStyle = 'white';
-        wheelCtx.font = 'bold 12px Arial'; // Kleinere Schrift für kompakteres Design
+        wheelCtx.font = 'bold 12px Arial';
         wheelCtx.fillText(number, radius * 0.75, 0);
         wheelCtx.restore();
     });
@@ -1185,15 +1189,22 @@ function spinWheel() {
     // Wähle zufällige Gewinnzahl
     const winningNumber = ROULETTE_NUMBERS[Math.floor(Math.random() * ROULETTE_NUMBERS.length)];
     
-    // Berechne Ziel-Rotation (mehrere Umdrehungen + Zielposition)
+    // Berechne Ziel-Rotation
     const winningIndex = ROULETTE_NUMBERS.indexOf(winningNumber);
     const segmentAngle = (2 * Math.PI) / ROULETTE_NUMBERS.length;
     
-    // WICHTIG: Der Zeiger ist oben (bei 0°), daher müssen wir NEGATIV rotieren
-    // und die Position so anpassen, dass das Segment unter dem Zeiger landet
-    // Offset um 90° (π/2) damit die Zahl wirklich unter dem Zeiger ist
-    const targetAngle = -(winningIndex * segmentAngle) - (segmentAngle / 2);
-    const targetRotation = (Math.PI * 2 * 5) + targetAngle; // 5 volle Umdrehungen plus Zielwinkel
+    // Der Zeiger ist oben (0° / 12 Uhr Position)
+    // Das Rad dreht sich im Uhrzeigersinn
+    // Wir müssen das Rad so drehen, dass die Gewinnzahl oben unter dem Zeiger landet
+    
+    // Berechne wie weit wir drehen müssen (negativ = gegen Uhrzeigersinn vom Rad aus gesehen)
+    // Die Gewinnzahl soll am Ende oben (bei 0°) sein
+    // Aktuell ist Index 0 bei 0°, also müssen wir -winningIndex * segmentAngle drehen
+    const targetAngle = -(winningIndex * segmentAngle);
+    
+    // Füge 5 volle Umdrehungen hinzu für den Effekt
+    const fullRotations = Math.PI * 2 * 5; // 5 Umdrehungen
+    const targetRotation = fullRotations + targetAngle;
     
     // Animation
     const duration = 3000; // 3 Sekunden
@@ -1204,7 +1215,7 @@ function spinWheel() {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         
-        // Easing function (ease-out)
+        // Easing function (ease-out cubic)
         const eased = 1 - Math.pow(1 - progress, 3);
         const currentRotation = startRotation + (targetRotation * eased);
         
