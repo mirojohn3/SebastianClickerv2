@@ -1,0 +1,1282 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0e17 100%);
+    min-height: 100vh;
+    color: #333;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Subtiler Hintergrund-Textur-Effekt */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(99, 125, 234, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.game-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: white;
+    font-size: 3em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 20px;
+}
+
+.roulette-section {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(239, 68, 68, 0.3);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.roulette-section h2 {
+    text-align: center;
+    color: #ef4444;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+.cookie-section {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.upgrades-section {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.bonus-button-bottom {
+    grid-column: 3;
+    grid-row: 2;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: 5px;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+    }
+    
+    .roulette-section {
+        grid-column: 1;
+        grid-row: auto;
+        max-height: none;
+    }
+    
+    .cookie-section {
+        grid-column: 1;
+        grid-row: auto;
+    }
+    
+    .upgrades-section {
+        grid-column: 1;
+        grid-row: auto;
+    }
+    
+    .bonus-button-bottom {
+        grid-column: 1;
+        grid-row: auto;
+    }
+    
+    .action-buttons-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cookie-section {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5), 
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    border: 2px solid rgba(99, 125, 234, 0.2);
+}
+
+.stats {
+    width: 100%;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.cookie-count-display {
+    font-size: 2.5em;
+    font-weight: bold;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 10px rgba(118, 75, 162, 0.3);
+    transition: transform 0.2s ease;
+}
+
+.cookie-count-display:hover {
+    transform: scale(1.05);
+}
+
+.cps-display {
+    font-size: 1.2em;
+    color: #10b981;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+}
+
+.total-earned {
+    font-size: 0.9em;
+    color: #667eea;
+    margin-top: 5px;
+    opacity: 0.8;
+}
+
+.big-cookie {
+    font-size: 12em;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                filter 0.15s ease;
+    padding: 20px;
+    border-radius: 50%;
+    position: relative;
+    filter: drop-shadow(0 10px 20px rgba(118, 75, 162, 0.3));
+}
+
+.big-cookie:hover {
+    transform: scale(1.1) rotate(5deg);
+    filter: drop-shadow(0 15px 30px rgba(118, 75, 162, 0.5));
+}
+
+.big-cookie:active {
+    transform: scale(0.92);
+    filter: drop-shadow(0 5px 10px rgba(118, 75, 162, 0.6));
+}
+
+/* Klick-Animation mit Klasse */
+.big-cookie.clicked {
+    animation: cookie-bounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cookie-bounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.92); }
+    100% { transform: scale(1); }
+}
+
+.click-animation-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.click-number {
+    position: absolute;
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #ffd700;
+    animation: float-up 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    pointer-events: none;
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.5),
+        0 0 10px rgba(255, 215, 0, 0.8);
+    z-index: 100;
+}
+
+@keyframes float-up {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    20% {
+        opacity: 1;
+        transform: translateY(-20px) scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-120px) scale(0.8);
+    }
+}
+
+.upgrades-section {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5), 
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+    max-height: 600px;
+    overflow-y: auto;
+    border: 2px solid rgba(99, 125, 234, 0.2);
+}
+
+.upgrades-section h2 {
+    color: #764ba2;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.upgrades-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.upgrade-item {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: white;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Kaufbar (Affordable) - Helle, einladende Farben */
+.upgrade-item.affordable {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #34d399;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 25px rgba(16, 185, 129, 0.6);
+    }
+}
+
+/* Nicht kaufbar (Not Affordable) - Ausgegraut */
+.upgrade-item.not-affordable {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    border-color: #9ca3af;
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Hover-Effekt nur für kaufbare Items */
+.upgrade-item.affordable:hover {
+    transform: translateX(8px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+    border-color: #6ee7b7;
+}
+
+.upgrade-item.affordable:active {
+    transform: translateX(8px) scale(0.98);
+}
+
+/* Deaktivierter Zustand */
+.upgrade-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Gekaufte permanente Upgrades */
+.upgrade-item.purchased {
+    background: linear-gradient(135deg, #a3a3a3 0%, #737373 100%);
+    border-color: #d4d4d4;
+    opacity: 0.7;
+    cursor: default;
+}
+
+.upgrade-item.purchased::before {
+    display: none;
+}
+
+/* Glanz-Effekt für kaufbare Items */
+.upgrade-item.affordable::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 70%
+    );
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+    }
+}
+
+.upgrade-name {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+}
+
+.upgrade-info {
+    font-size: 0.9em;
+    opacity: 0.95;
+    position: relative;
+    z-index: 1;
+}
+
+.upgrade-count {
+    font-size: 1.1em;
+    margin-top: 5px;
+    position: relative;
+    z-index: 1;
+}
+
+.upgrade-cost {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-top: 5px;
+    position: relative;
+    z-index: 1;
+}
+
+.upgrade-requirement {
+    font-size: 0.85em;
+    color: #fbbf24;
+    margin-top: 5px;
+    padding: 5px;
+    background: rgba(251, 191, 36, 0.1);
+    border-radius: 5px;
+    border-left: 3px solid #fbbf24;
+}
+
+/* Spezielle Hervorhebung für sehr teure Items */
+.upgrade-item.not-affordable .upgrade-cost {
+    color: #fca5a5;
+}
+
+/* Action Buttons Container */
+.action-buttons-container {
+    margin-top: 30px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+/* Daily Bonus Styles */
+.daily-bonus-container {
+    display: flex;
+    justify-content: center;
+}
+
+.daily-bonus-btn {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border: 3px solid #fbbf24;
+    border-radius: 15px;
+    padding: 20px 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+
+.daily-bonus-btn:not(:disabled):hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 30px rgba(245, 158, 11, 0.6);
+}
+
+.daily-bonus-btn:not(:disabled):active {
+    transform: scale(0.98);
+}
+
+.daily-bonus-btn:disabled {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    border-color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.6;
+    box-shadow: none;
+}
+
+.daily-bonus-btn.available {
+    animation: bonus-pulse 2s ease-in-out infinite;
+}
+
+@keyframes bonus-pulse {
+    0%, 100% {
+        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 12px 35px rgba(245, 158, 11, 0.8);
+        transform: scale(1.05);
+    }
+}
+
+.bonus-icon {
+    font-size: 2em;
+    margin-bottom: 5px;
+}
+
+.bonus-text {
+    font-size: 1.1em;
+    margin-bottom: 5px;
+}
+
+.bonus-timer {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+/* Cookie Roulette Styles */
+.roulette-container {
+    display: flex;
+    justify-content: center;
+}
+
+.roulette-btn {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: 3px solid #f87171;
+    border-radius: 15px;
+    padding: 20px 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+    width: 100%;
+}
+
+.roulette-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 30px rgba(239, 68, 68, 0.6);
+    animation: roulette-pulse 0.5s ease-in-out infinite;
+}
+
+.roulette-btn:active {
+    transform: scale(0.98);
+}
+
+@keyframes roulette-pulse {
+    0%, 100% { transform: scale(1.05); }
+    50% { transform: scale(1.08); }
+}
+
+.roulette-icon {
+    font-size: 2em;
+    margin-bottom: 5px;
+}
+
+.roulette-text {
+    font-size: 1.1em;
+}
+
+/* Tier Sections */
+.upgrade-tier-section {
+    margin-bottom: 25px;
+}
+
+.tier-title {
+    color: #764ba2;
+    font-size: 1.1em;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: rgba(118, 75, 162, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #764ba2;
+}
+
+/* Tab Navigation */
+.tab-navigation {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 15px 10px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    color: #6b7280;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.tab-btn:hover {
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.tab-btn.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.tab-btn::before {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background: #667eea;
+    transition: width 0.3s ease;
+}
+
+.tab-btn.active::before {
+    width: 100%;
+}
+
+/* Tab Content */
+.tab-content-wrapper {
+    position: relative;
+    min-height: 400px;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tab-content h2 {
+    color: #764ba2;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.tab-description {
+    text-align: center;
+    color: #6b7280;
+    margin-bottom: 20px;
+    font-style: italic;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.stat-item {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+}
+
+.stat-label {
+    font-size: 0.9em;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+/* Achievements */
+.achievements-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.achievement-item {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    border: 2px solid #d1d5db;
+    transition: all 0.3s ease;
+}
+
+.achievement-item.unlocked {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    border-color: #fbbf24;
+    color: white;
+    box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4);
+}
+
+.achievement-icon {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    filter: grayscale(100%);
+}
+
+.achievement-item.unlocked .achievement-icon {
+    filter: grayscale(0%);
+}
+
+.achievement-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.achievement-description {
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+
+/* Golden Cookie Styles */
+.golden-cookie {
+    position: fixed;
+    font-size: 4em;
+    cursor: pointer;
+    animation: sparkle 1s ease-in-out infinite, float 3s ease-in-out infinite;
+    z-index: 1000;
+    transition: transform 0.1s ease;
+}
+
+.golden-cookie:hover {
+    transform: scale(1.2);
+}
+
+.golden-cookie.hidden {
+    display: none;
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(10deg); }
+}
+
+/* Scrollbar Styling */
+.upgrades-section::-webkit-scrollbar {
+    width: 8px;
+}
+
+.upgrades-section::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.upgrades-section::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
+
+.upgrades-section::-webkit-scrollbar-thumb:hover {
+    background: #764ba2;
+}
+
+.roulette-section::-webkit-scrollbar {
+    width: 8px;
+}
+
+.roulette-section::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.roulette-section::-webkit-scrollbar-thumb {
+    background: #ef4444;
+    border-radius: 10px;
+}
+
+.roulette-section::-webkit-scrollbar-thumb:hover {
+    background: #dc2626;
+}
+
+/* Roulette Wheel */
+.roulette-wheel-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.roulette-wheel {
+    position: relative;
+    width: 300px;
+    height: 300px;
+}
+
+.wheel-pointer {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2em;
+    color: #fbbf24;
+    z-index: 10;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+#wheelCanvas {
+    border-radius: 50%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3),
+                inset 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Compact Roulette Styles */
+.roulette-section .bet-amount-section {
+    margin-bottom: 15px;
+}
+
+.roulette-section .bet-amount-section label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #764ba2;
+    font-size: 0.9em;
+}
+
+.roulette-section #betAmount {
+    width: 100%;
+    padding: 10px;
+    font-size: 1em;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.roulette-section .quick-bet-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.roulette-section .quick-bet-btn {
+    padding: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.85em;
+    transition: all 0.3s ease;
+}
+
+.roulette-section .quick-bet-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.roulette-section .bet-type-section h3 {
+    color: #764ba2;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1em;
+}
+
+.bet-options-compact {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.bet-options-compact .bet-btn {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    font-size: 0.85em;
+}
+
+.bet-options-compact .bet-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+    border-color: #a78bfa;
+}
+
+.bet-options-compact .bet-btn.selected {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #34d399;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.5);
+}
+
+.bet-options-compact .bet-red {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.bet-options-compact .bet-black {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+}
+
+.bet-options-compact .bet-number {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.number-select-compact {
+    grid-column: span 2;
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.spin-btn-compact {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: 3px solid #34d399;
+    border-radius: 12px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.spin-btn-compact:not(:disabled):hover {
+    transform: scale(1.02);
+    box-shadow: 0 12px 30px rgba(16, 185, 129, 0.6);
+}
+
+.spin-btn-compact:disabled {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    border-color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.roulette-section .spin-icon {
+    font-size: 1.2em;
+    animation: rotate 2s linear infinite;
+}
+
+.spin-btn-compact:disabled .spin-icon {
+    animation: none;
+}
+
+.roulette-section .roulette-result {
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: bold;
+    text-align: center;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.roulette-section .roulette-result.win {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    animation: winPulse 0.5s ease-in-out 3;
+}
+
+.roulette-section .roulette-result.lose {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    animation: shake 0.5s ease-in-out;
+}
+
+/* Bonus Button Bottom */
+.bonus-button-bottom {
+    width: 100%;
+    padding: 0 20px;
+}
+
+.bonus-button-bottom .daily-bonus-btn {
+    width: 100%;
+    max-width: none;
+}
+
+.wheel-spinning {
+    animation: spinWheel 3s cubic-bezier(0.17, 0.67, 0.38, 0.98) forwards;
+}
+
+@keyframes spinWheel {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(1800deg); /* 5 volle Umdrehungen */
+    }
+}
+
+/* Betting Area */
+.roulette-betting-area {
+    background: rgba(118, 75, 162, 0.05);
+    border-radius: 15px;
+    padding: 25px;
+}
+
+.bet-amount-section {
+    margin-bottom: 25px;
+}
+
+.bet-amount-section label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #764ba2;
+}
+
+#betAmount {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1em;
+    border: 2px solid #667eea;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.quick-bet-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.quick-bet-btn {
+    padding: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.quick-bet-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Bet Type Section */
+.bet-type-section {
+    margin-bottom: 25px;
+}
+
+.bet-type-section h3 {
+    color: #764ba2;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.bet-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.bet-option-group {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bet-option-group.full-width {
+    grid-column: span 3;
+}
+
+.bet-option-group h4 {
+    color: #667eea;
+    margin-bottom: 12px;
+    text-align: center;
+    font-size: 0.95em;
+}
+
+.bet-btn {
+    width: 100%;
+    padding: 12px;
+    margin: 5px 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    font-size: 1em;
+}
+
+.bet-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+    border-color: #a78bfa;
+}
+
+.bet-btn:active {
+    transform: translateY(0);
+}
+
+.bet-btn.selected {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #34d399;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.5);
+}
+
+.bet-red {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.bet-red:hover {
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+}
+
+.bet-black {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+}
+
+.bet-black:hover {
+    box-shadow: 0 4px 12px rgba(31, 41, 55, 0.5);
+}
+
+.bet-number {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+#singleNumberSelect {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    font-size: 1em;
+}
+
+.red-number {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+.black-number {
+    color: #1f2937;
+    font-weight: bold;
+}
+
+/* Spin Section */
+.spin-section {
+    text-align: center;
+}
+
+.spin-btn {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px 40px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: 3px solid #34d399;
+    border-radius: 15px;
+    font-size: 1.4em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin: 0 auto 20px;
+}
+
+.spin-btn:not(:disabled):hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 30px rgba(16, 185, 129, 0.6);
+    animation: spin-pulse 0.6s ease-in-out infinite;
+}
+
+@keyframes spin-pulse {
+    0%, 100% { transform: scale(1.05); }
+    50% { transform: scale(1.08); }
+}
+
+.spin-btn:disabled {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    border-color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.spin-icon {
+    font-size: 1.2em;
+    animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin-btn:disabled .spin-icon {
+    animation: none;
+}
+
+/* Roulette Result */
+.roulette-result {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 12px;
+    font-size: 1.3em;
+    font-weight: bold;
+    text-align: center;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.roulette-result.win {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    animation: winPulse 0.5s ease-in-out 3;
+}
+
+.roulette-result.lose {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes winPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .bet-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .bet-option-group.full-width {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .roulette-wheel {
+        width: 300px;
+        height: 300px;
+    }
+    
+    #wheelCanvas {
+        width: 300px !important;
+        height: 300px !important;
+    }
+    
+    .bet-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .bet-option-group.full-width {
+        grid-column: span 1;
+    }
+    
+    .modal-content {
+        max-width: 95%;
+        padding: 20px;
+    }
+    
+    .roulette-modal {
+        width: 100%;
+    }
+}

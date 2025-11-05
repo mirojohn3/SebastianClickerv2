@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Empire</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="game-systems.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>🍪 Cookie Clicker 🍪</h1>
+        </header>
+        
+        <div class="main-content">
+            <!-- Linke Spalte: Roulette -->
+            <div class="roulette-section">
+                <h2>🎰 Cookie Roulette 🎰</h2>
+                
+                <div class="roulette-wheel-container">
+                    <div class="roulette-wheel" id="rouletteWheel">
+                        <canvas id="wheelCanvas" width="300" height="300"></canvas>
+                        <div class="wheel-pointer">▼</div>
+                    </div>
+                </div>
+                
+                <div class="roulette-betting-area">
+                    <div class="bet-amount-section">
+                        <label for="betAmount">Wetteinsatz (Cookies):</label>
+                        <input type="number" id="betAmount" min="10" value="100" step="10">
+                        <div class="quick-bet-buttons">
+                            <button class="quick-bet-btn" data-amount="100">100</button>
+                            <button class="quick-bet-btn" data-amount="1000">1K</button>
+                            <button class="quick-bet-btn" data-amount="10000">10K</button>
+                            <button class="quick-bet-btn" data-amount="all">Alles</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bet-type-section">
+                        <h3>Wähle deine Wette:</h3>
+                        <div class="bet-options-compact">
+                            <button class="bet-btn bet-red" data-type="red">🔴 Rot (2x)</button>
+                            <button class="bet-btn bet-black" data-type="black">⚫ Schwarz (2x)</button>
+                            <button class="bet-btn" data-type="even">Gerade (2x)</button>
+                            <button class="bet-btn" data-type="odd">Ungerade (2x)</button>
+                            <button class="bet-btn" data-type="low">1-18 (2x)</button>
+                            <button class="bet-btn" data-type="high">19-36 (2x)</button>
+                            <button class="bet-btn" data-type="dozen1">1-12 (3x)</button>
+                            <button class="bet-btn" data-type="dozen2">13-24 (3x)</button>
+                            <button class="bet-btn" data-type="dozen3">25-36 (3x)</button>
+                            
+                            <select id="singleNumberSelect" class="number-select-compact">
+                                <option value="">-- Zahl wählen (36x) --</option>
+                                <option value="0" style="color: green;">0 (Grün)</option>
+                                <option value="1" class="red-number">1 (Rot)</option>
+                                <option value="2" class="black-number">2 (Schwarz)</option>
+                                <option value="3" class="red-number">3 (Rot)</option>
+                                <option value="4" class="black-number">4 (Schwarz)</option>
+                                <option value="5" class="red-number">5 (Rot)</option>
+                                <option value="6" class="black-number">6 (Schwarz)</option>
+                                <option value="7" class="red-number">7 (Rot)</option>
+                                <option value="8" class="black-number">8 (Schwarz)</option>
+                                <option value="9" class="red-number">9 (Rot)</option>
+                                <option value="10" class="black-number">10 (Schwarz)</option>
+                                <option value="11" class="black-number">11 (Schwarz)</option>
+                                <option value="12" class="red-number">12 (Rot)</option>
+                                <option value="13" class="black-number">13 (Schwarz)</option>
+                                <option value="14" class="red-number">14 (Rot)</option>
+                                <option value="15" class="black-number">15 (Schwarz)</option>
+                                <option value="16" class="red-number">16 (Rot)</option>
+                                <option value="17" class="black-number">17 (Schwarz)</option>
+                                <option value="18" class="red-number">18 (Rot)</option>
+                                <option value="19" class="red-number">19 (Rot)</option>
+                                <option value="20" class="black-number">20 (Schwarz)</option>
+                                <option value="21" class="red-number">21 (Rot)</option>
+                                <option value="22" class="black-number">22 (Schwarz)</option>
+                                <option value="23" class="red-number">23 (Rot)</option>
+                                <option value="24" class="black-number">24 (Schwarz)</option>
+                                <option value="25" class="red-number">25 (Rot)</option>
+                                <option value="26" class="black-number">26 (Schwarz)</option>
+                                <option value="27" class="red-number">27 (Rot)</option>
+                                <option value="28" class="black-number">28 (Schwarz)</option>
+                                <option value="29" class="black-number">29 (Schwarz)</option>
+                                <option value="30" class="red-number">30 (Rot)</option>
+                                <option value="31" class="black-number">31 (Schwarz)</option>
+                                <option value="32" class="red-number">32 (Rot)</option>
+                                <option value="33" class="black-number">33 (Schwarz)</option>
+                                <option value="34" class="red-number">34 (Rot)</option>
+                                <option value="35" class="black-number">35 (Schwarz)</option>
+                                <option value="36" class="red-number">36 (Rot)</option>
+                            </select>
+                            <button class="bet-btn bet-number" data-type="number">Auf Zahl setzen</button>
+                        </div>
+                    </div>
+                    
+                    <div class="spin-section">
+                        <button id="spinButton" class="spin-btn-compact" disabled>
+                            <span class="spin-icon">�</span>
+                            <span>Rad drehen!</span>
+                        </button>
+                        <div id="rouletteResult" class="roulette-result"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mittlere Spalte: Cookie -->
+            <div class="cookie-section">
+                <div class="stats">
+                    <div class="resource-displays">
+                        <div class="cookie-count-display">
+                            <span id="cookieCount">0</span> 🍪 Cookies
+                        </div>
+                        <div class="stars-display">
+                            <span id="starsCount">0</span> ⭐ Sterne
+                        </div>
+                        <div class="power-display">
+                            <span id="powerCount">0</span> 🔮 Macht
+                        </div>
+                    </div>
+                    <div class="cps-display">
+                        pro Sekunde: <span id="cpsDisplay">0</span>
+                    </div>
+                    <div class="epoch-display">
+                        Epoche: <span id="currentEpochName">🪨 Steinzeit</span>
+                    </div>
+                </div>
+                
+                <button id="bigCookie" class="big-cookie">
+                    🍪
+                </button>
+                
+                <div class="click-animation-container" id="clickAnimationContainer"></div>
+            </div>
+            
+            <!-- Rechte Spalte: Upgrades -->
+            <div class="upgrades-section">
+                <!-- Tab Navigation -->
+                <div class="tab-navigation">
+                    <button class="tab-btn active" data-tab="buildings">
+                        🏭 Gebäude
+                    </button>
+                    <button class="tab-btn" data-tab="upgrades">
+                        ⚡ Upgrades
+                    </button>
+                    <button class="tab-btn" data-tab="quests">
+                        📜 Quests
+                    </button>
+                    <button class="tab-btn" data-tab="epochs">
+                        🌍 Epochen
+                    </button>
+                    <button class="tab-btn" data-tab="stats">
+                        📊 Stats
+                    </button>
+                </div>
+                
+                <!-- Tab Content -->
+                <div class="tab-content-wrapper">
+                    <!-- Gebäude Tab -->
+                    <div id="buildingsTab" class="tab-content active">
+                        <h2>Gebäude</h2>
+                        <div id="upgradesContainer" class="upgrades-container">
+                            <!-- Upgrades werden hier dynamisch eingefügt -->
+                        </div>
+                    </div>
+                    
+                    <!-- Verbesserungen Tab -->
+                    <div id="upgradesTab" class="tab-content">
+                        <h2>⚡ Permanente Upgrades</h2>
+                        <p class="tab-description">Einmalige Käufe für dauerhafte Verbesserungen!</p>
+                        
+                        <div class="upgrade-tier-section">
+                            <h3 class="tier-title">🥉 Tier 1: Frühe Upgrades</h3>
+                            <div id="tier1Container" class="upgrades-container"></div>
+                        </div>
+                        
+                        <div class="upgrade-tier-section">
+                            <h3 class="tier-title">🥈 Tier 2: Mittlere Upgrades</h3>
+                            <div id="tier2Container" class="upgrades-container"></div>
+                        </div>
+                        
+                        <div class="upgrade-tier-section">
+                            <h3 class="tier-title">🥇 Tier 3: Späte Upgrades</h3>
+                            <div id="tier3Container" class="upgrades-container"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quests Tab -->
+                    <div id="questsTab" class="tab-content">
+                        <h2>📜 Tägliche Quests</h2>
+                        <p class="tab-description">Erfülle Quests für Sterne und Macht!</p>
+                        <div id="questsContainer" class="quests-container">
+                            <!-- Quests werden hier dynamisch eingefügt -->
+                        </div>
+                    </div>
+                    
+                    <!-- Epochen Tab -->
+                    <div id="epochsTab" class="tab-content">
+                        <h2>🌍 Epochen-Evolution</h2>
+                        <p class="tab-description">Entwickle dein Imperium durch die Zeitalter!</p>
+                        <div id="epochsContainer" class="epochs-container">
+                            <!-- Epochen werden hier dynamisch eingefügt -->
+                        </div>
+                    </div>
+                    
+                    <!-- Statistiken Tab -->
+                    <div id="statsTab" class="tab-content">
+                        <h2>Statistiken & Erfolge</h2>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-label">Gesamt geklickt:</div>
+                                <div class="stat-value" id="totalClicksStat">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Gesamt verdient:</div>
+                                <div class="stat-value" id="totalEarnedStat">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">CPS:</div>
+                                <div class="stat-value" id="cpsStat">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Gebäude gesamt:</div>
+                                <div class="stat-value" id="totalBuildingsStat">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Upgrades gekauft:</div>
+                                <div class="stat-value" id="upgradesPurchasedStat">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Spielzeit:</div>
+                                <div class="stat-value" id="playtimeStat">0s</div>
+                            </div>
+                        </div>
+                        
+                        <h3 style="margin-top: 30px; color: #764ba2;">🏆 Erfolge</h3>
+                        <div id="achievementsContainer" class="achievements-container">
+                            <!-- Achievements werden hier dynamisch eingefügt -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bonus Button unter Upgrades -->
+            <div class="bonus-button-bottom">
+                <button id="dailyBonusBtn" class="daily-bonus-btn" disabled>
+                    <div class="bonus-icon">🎁</div>
+                    <div class="bonus-text">3-Min Geschenk</div>
+                    <div id="bonusTimer" class="bonus-timer">Verfügbar!</div>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Golden Cookie -->
+        <div id="goldenCookie" class="golden-cookie hidden">
+            ✨🍪✨
+        </div>
+        
+        <!-- Expedition Modal -->
+        <div id="expeditionModal" class="modal-overlay hidden">
+            <div class="modal-content expedition-modal">
+                <button class="modal-close" id="closeExpedition">&times;</button>
+                <h2 id="expeditionTitle">🗺️ Expedition Verfügbar!</h2>
+                <div id="expeditionContent"></div>
+            </div>
+        </div>
+        
+        <!-- Event Modal -->
+        <div id="eventModal" class="modal-overlay hidden">
+            <div class="modal-content event-modal">
+                <h2 id="eventTitle"></h2>
+                <div id="eventContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="game-systems.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
