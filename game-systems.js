@@ -239,10 +239,16 @@ function updateEpochsUI() {
                 <div class="epoch-cost">Kosten: ${formatNumber(epoch.powerCost)} 🔮 Macht</div>
                 ${index === currentEpoch ? '<div class="epoch-status">Aktuelle Epoche</div>' : ''}
                 ${index < currentEpoch ? '<div class="epoch-status">✅ Abgeschlossen</div>' : ''}
-                ${canAdvance ? '<button class="epoch-advance-btn" onclick="advanceEpoch(' + index + ')">Voranschreiten!</button>' : ''}
+                ${canAdvance ? '<button class="epoch-advance-btn" data-epoch-index="' + index + '">Voranschreiten!</button>' : ''}
                 ${index > currentEpoch + 1 ? '<div class="epoch-locked">🔒 Vorherige Epoche erforderlich</div>' : ''}
             </div>
         `;
+        
+        // Event Listener nach innerHTML setzen
+        const advanceBtn = epochDiv.querySelector('.epoch-advance-btn');
+        if (advanceBtn) {
+            advanceBtn.addEventListener('click', () => advanceEpoch(index));
+        }
         
         container.appendChild(epochDiv);
     });
@@ -333,10 +339,15 @@ function showExpeditionModal(expedition) {
     
     if (expedition.minigame === 'memory') {
         content.innerHTML = createMemoryGame(expedition);
+        // Event Listeners für Memory-Karten werden in createMemoryGame gesetzt
     } else if (expedition.minigame === 'clickDuel') {
         content.innerHTML = createClickDuel(expedition);
+        // Event Listeners nach innerHTML setzen
+        setupClickDuelListeners(expedition);
     } else if (expedition.minigame === 'choice') {
         content.innerHTML = createChoiceGame(expedition);
+        // Event Listeners für Choice-Buttons werden nach innerHTML gesetzt
+        setupChoiceListeners(expedition);
     }
     
     modal.classList.remove('hidden');
@@ -349,9 +360,11 @@ function createMemoryGame(expedition) {
     const symbols = ['🍪', '⭐', '🔮', '🏆', '💎', '👑'];
     const cards = [...symbols, ...symbols].sort(() => Math.random() - 0.5);
     
-    let firstCard = null;
-    let secondCard = null;
-    let matches = 0;
+    // Reset Memory-Variablen
+    memoryFirstCard = null;
+    memorySecondCard = null;
+    memoryMatches = 0;
+    memoryCurrentExpedition = expedition;
     
     let html = `
         <p>${expedition.description}</p>
@@ -360,15 +373,27 @@ function createMemoryGame(expedition) {
     `;
     
     cards.forEach((symbol, index) => {
-        html += `<div class="memory-card" data-symbol="${symbol}" data-index="${index}" onclick="flipMemoryCard(this, '${JSON.stringify(expedition).replace(/'/g, "\\'")}')">?</div>`;
+        html += `<div class="memory-card" data-symbol="${symbol}" data-index="${index}">?</div>`;
     });
     
     html += `
         </div>
-        <button class="expedition-skip-btn" onclick="skipExpedition('${JSON.stringify(expedition).replace(/'/g, "\\'")}')">
+        <button class="expedition-skip-btn" id="memorySkipBtn">
             Überspringen (normale Belohnung)
         </button>
     `;
+    
+    // Event Listeners werden nach innerHTML gesetzt
+    setTimeout(() => {
+        document.querySelectorAll('.memory-card').forEach(card => {
+            card.addEventListener('click', () => flipMemoryCard(card));
+        });
+        
+        const skipBtn = document.getElementById('memorySkipBtn');
+        if (skipBtn) {
+            skipBtn.addEventListener('click', () => skipExpedition(expedition));
+        }
+    }, 0);
     
     return html;
 }
@@ -382,16 +407,38 @@ function createClickDuel(expedition) {
         <p class="expedition-challenge">Klicke so oft wie möglich in 10 Sekunden!</p>
         <div class="click-duel-area">
             <div class="click-duel-counter" id="clickDuelCount">0</div>
-            <button class="click-duel-btn" id="clickDuelBtn" onclick="clickDuelClick()">KLICK!</button>
+            <button class="click-duel-btn" id="clickDuelBtn">KLICK!</button>
             <div class="click-duel-timer" id="clickDuelTimer">10</div>
         </div>
-        <button class="expedition-start-btn" onclick="startClickDuel('${JSON.stringify(expedition).replace(/'/g, "\\'")}')">
+        <button class="expedition-start-btn" id="expeditionStartBtn">
             Start!
         </button>
-        <button class="expedition-skip-btn" onclick="skipExpedition('${JSON.stringify(expedition).replace(/'/g, "\\'")}')">
+        <button class="expedition-skip-btn" id="expeditionSkipBtn">
             Überspringen
         </button>
     `;
+}
+
+/**
+ * Setzt Event Listeners für Click-Duell
+ */
+function setupClickDuelListeners(expedition) {
+    const clickBtn = document.getElementById('clickDuelBtn');
+    const startBtn = document.getElementById('expeditionStartBtn');
+    const skipBtn = document.getElementById('expeditionSkipBtn');
+    
+    if (clickBtn) {
+        clickBtn.disabled = true; // Deaktiviert bis Start gedrückt wird
+        clickBtn.addEventListener('click', clickDuelClick);
+    }
+    
+    if (startBtn) {
+        startBtn.addEventListener('click', () => startClickDuel(expedition));
+    }
+    
+    if (skipBtn) {
+        skipBtn.addEventListener('click', () => skipExpedition(expedition));
+    }
 }
 
 /**
@@ -402,17 +449,30 @@ function createChoiceGame(expedition) {
         <p>${expedition.description}</p>
         <p class="expedition-challenge">Wähle weise! Eine Option verdoppelt die Belohnung, eine halbiert sie!</p>
         <div class="choice-buttons">
-            <button class="choice-btn" onclick="makeExpeditionChoice(2, '${JSON.stringify(expedition).replace(/'/g, "\\'")}')">
+            <button class="choice-btn" data-multiplier="2">
                 🎲 Risiko (0.5x oder 2x)
             </button>
-            <button class="choice-btn" onclick="makeExpeditionChoice(1, '${JSON.stringify(expedition).replace(/'/g, "\\'")}')">
+            <button class="choice-btn" data-multiplier="1">
                 ✅ Sicher (1x)
             </button>
-            <button class="choice-btn" onclick="makeExpeditionChoice(Math.random() < 0.5 ? 0.5 : 3, '${JSON.stringify(expedition).replace(/'/g, "\\'")}')">
+            <button class="choice-btn" data-multiplier="3">
                 💰 Großes Risiko (0.5x oder 3x)
             </button>
         </div>
     `;
+}
+
+/**
+ * Setzt Event Listeners für Choice-Game
+ */
+function setupChoiceListeners(expedition) {
+    document.querySelectorAll('.choice-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const maxMultiplier = parseFloat(btn.dataset.multiplier);
+            const actualMultiplier = maxMultiplier === 1 ? 1 : (Math.random() < 0.5 ? 0.5 : maxMultiplier);
+            makeExpeditionChoice(actualMultiplier, expedition);
+        });
+    });
 }
 
 /**
@@ -442,13 +502,11 @@ function completeExpedition(expedition, multiplier = 1) {
     updateQuestProgress('complete_expedition', 1);
 }
 
-function skipExpedition(expeditionStr) {
-    const expedition = JSON.parse(expeditionStr);
+function skipExpedition(expedition) {
     completeExpedition(expedition, 1);
 }
 
-function makeExpeditionChoice(multiplier, expeditionStr) {
-    const expedition = JSON.parse(expeditionStr);
+function makeExpeditionChoice(multiplier, expedition) {
     completeExpedition(expedition, multiplier);
 }
 
@@ -614,8 +672,9 @@ function spawnFlyingCookie() {
 let memoryFirstCard = null;
 let memorySecondCard = null;
 let memoryMatches = 0;
+let memoryCurrentExpedition = null;
 
-function flipMemoryCard(cardElement, expeditionStr) {
+function flipMemoryCard(cardElement) {
     if (cardElement.classList.contains('flipped') || cardElement.classList.contains('matched')) return;
     
     const symbol = cardElement.dataset.symbol;
@@ -634,9 +693,8 @@ function flipMemoryCard(cardElement, expeditionStr) {
             memoryFirstCard = null;
             memorySecondCard = null;
             
-            if (memoryMatches === 6) {
-                const expedition = JSON.parse(expeditionStr);
-                setTimeout(() => completeExpedition(expedition, 2), 500);
+            if (memoryMatches === 6 && memoryCurrentExpedition) {
+                setTimeout(() => completeExpedition(memoryCurrentExpedition, 2), 500);
             }
         } else {
             setTimeout(() => {
@@ -660,27 +718,33 @@ let clickDuelActive = false;
 function clickDuelClick() {
     if (!clickDuelActive) return;
     clickDuelCount++;
-    document.getElementById('clickDuelCount').textContent = clickDuelCount;
+    const countEl = document.getElementById('clickDuelCount');
+    if (countEl) {
+        countEl.textContent = clickDuelCount;
+    }
 }
 
-function startClickDuel(expeditionStr) {
-    const expedition = JSON.parse(expeditionStr);
+function startClickDuel(expedition) {
     clickDuelCount = 0;
     clickDuelActive = true;
+    
+    const countEl = document.getElementById('clickDuelCount');
+    if (countEl) countEl.textContent = '0';
     
     let timeLeft = 10;
     const timerEl = document.getElementById('clickDuelTimer');
     const btnEl = document.getElementById('clickDuelBtn');
-    btnEl.disabled = false;
+    
+    if (btnEl) btnEl.disabled = false;
     
     const countdown = setInterval(() => {
         timeLeft--;
-        timerEl.textContent = timeLeft;
+        if (timerEl) timerEl.textContent = timeLeft;
         
         if (timeLeft <= 0) {
             clearInterval(countdown);
             clickDuelActive = false;
-            btnEl.disabled = true;
+            if (btnEl) btnEl.disabled = true;
             
             const multiplier = clickDuelCount >= 100 ? 3 : clickDuelCount >= 50 ? 2 : 1;
             setTimeout(() => completeExpedition(expedition, multiplier), 500);
